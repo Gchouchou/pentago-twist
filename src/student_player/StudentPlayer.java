@@ -4,6 +4,7 @@ import boardgame.Move;
 
 import pentago_twist.PentagoPlayer;
 import pentago_twist.PentagoBoardState;
+import pentago_twist.PentagoMove;
 
 /** A player file submitted by a student. */
 public class StudentPlayer extends PentagoPlayer {
@@ -14,7 +15,7 @@ public class StudentPlayer extends PentagoPlayer {
      * associate you with your agent. The constructor should do nothing else.
      */
     public StudentPlayer() {
-        super("xxxxxxxxx");
+        super("260871056");
     }
 
     /**

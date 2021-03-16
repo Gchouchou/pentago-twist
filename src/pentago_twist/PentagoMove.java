@@ -9,20 +9,20 @@ public class PentagoMove extends Move {
     private int playerId;
     private int xMove;
     private int yMove;
-    private int aSwap;
-    private int bSwap;
+    private int twistGrad;
+    private int twistType;
     private boolean fromBoard;
 
-    public PentagoMove(PentagoCoord coord, int aSwap, int bSwap, int playerId) {
-        this(coord.getX(), coord.getY(), aSwap, bSwap, playerId);
+    public PentagoMove(PentagoCoord coord, int twistGrad, int twistType, int playerId) {
+        this(coord.getX(), coord.getY(), twistGrad, twistType, playerId);
     }
 
-    public PentagoMove(int x, int y, int aSwap, int bSwap, int playerId) {
+    public PentagoMove(int x, int y, int twistGrad, int twistType, int playerId) {
         this.playerId = playerId;
         this.xMove = x;
         this.yMove = y;
-        this.aSwap = aSwap;
-        this.bSwap = bSwap;
+        this.twistGrad = twistGrad;
+        this.twistType = twistType;
         this.fromBoard = false;
     }
 
@@ -31,8 +31,8 @@ public class PentagoMove extends Move {
         try {
             this.xMove = Integer.parseInt(components[0]);
             this.yMove = Integer.parseInt(components[1]);
-            this.aSwap = Integer.parseInt(components[2]);
-            this.bSwap = Integer.parseInt(components[3]);
+            this.twistGrad = Integer.parseInt(components[2]);
+            this.twistType = Integer.parseInt(components[3]);
             this.playerId = Integer.parseInt(components[4]);
             this.fromBoard = false;
         } catch(NumberFormatException e) {
@@ -44,9 +44,9 @@ public class PentagoMove extends Move {
     public PentagoCoord getMoveCoord() {
         return new PentagoCoord(this.xMove, this.yMove); }
     public int getASwap() {
-        return this.aSwap; }
+        return this.twistGrad; }
     public int getBSwap() {
-        return this.bSwap; }
+        return this.twistType; }
 
     // Fetch player's name
     public String getPlayerName(int player) {
@@ -81,12 +81,12 @@ public class PentagoMove extends Move {
     @Override
     public String toPrettyString() {
 
-        return String.format("Player %d, Move: (%d, %d), R/F: (%d, %d)", playerId, xMove, yMove, aSwap, bSwap);
+        return String.format("Player %d, Move: (%d, %d), R/F: (%d, %d)", playerId, xMove, yMove, twistGrad, twistType);
         //return String.format("Player %d, Move: (%d, %d), Swap: (%d, %d)", playerId, xMove, yMove, aSwap, bSwap);
     }
 
     @Override
     public String toTransportable() {
-        return String.format("%d %d %d %d %d", xMove, yMove, aSwap, bSwap, playerId);
+        return String.format("%d %d %d %d %d", xMove, yMove, twistGrad, twistType, playerId);
     }
 }
