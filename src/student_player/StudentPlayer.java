@@ -1,5 +1,7 @@
 package student_player;
 
+import java.util.ArrayList;
+
 import boardgame.Move;
 
 import pentago_twist.PentagoPlayer;
@@ -34,5 +36,44 @@ public class StudentPlayer extends PentagoPlayer {
 
         // Return your move to be processed by the server.
         return myMove;
+    }
+    
+    int alphaBeta(PentagoBoardState position, int depth, int alpha, int beta,
+    		PentagoBoardState.Piece piece, String player) {
+    	if (position.gameOver() || depth == 0) {
+    		return MyTools.evaluate(position, piece);
+    	}
+    	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
+    	if (player.equals("MAX")) {
+    		for (PentagoMove m: moves) {
+    			PentagoBoardState successor = (PentagoBoardState) position.clone();
+    			successor.processMove(m);
+    			int value = alphaBeta(successor,depth-1,alpha,beta, piece ,"MIN");
+    			if (value > beta) {
+    				return beta;
+    			}
+    			if (value > alpha)
+    			{
+    				alpha = value;
+    			}
+    		}
+    		return alpha;
+    	}
+    	else {
+    		for ( PentagoMove m : moves ) {
+    			PentagoBoardState successor = (PentagoBoardState) position.clone();
+    			successor.processMove(m);
+    			int value = alphaBeta(successor,depth-1,alpha,beta,piece,"MAX");
+    			if (value <= alpha)
+    			{
+    				return alpha;
+    			}
+    			if (value < beta)
+    			{
+    				beta = value;
+    			}
+    		}
+    		return beta;
+    	}
     }
 }
