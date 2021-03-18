@@ -1,0 +1,5 @@
+Use HashSet to store tags of possible states.
+
+At every new state, add 8 possible symmetries to HashSet,
+
+Max is 288 possible moves, to be safe capacity of 1000.

@@ -39,7 +39,7 @@ public class MyTools {
     public static boolean checkLoaded() { return loaded; }
     
     public static void loadFile() {
-    	template = new ArrayList<int[][]>(FILELENGTH);
+    	template = new ArrayList<>(FILELENGTH);
     	loaded = true;
     	try {
     		FileReader fr = new FileReader("data/" + FILENAME);
@@ -56,6 +56,27 @@ public class MyTools {
     	catch (Exception e) {
     		e.printStackTrace();
     	}
+    }
+    
+    private static int evalParams(int count) {
+    	switch (count) {
+    	case 0:
+			return 0;
+		case 1:
+			return 1;
+		case 2:
+			return 5;
+		case 3:
+			return 50;
+		case 4:
+			return 1000;
+		case 5:
+//			not always needed
+			return 100000;
+		default:
+			return 0;
+		}
+
     }
     
 // check all win cons and count how many consecutive pieces we have
@@ -112,7 +133,7 @@ public class MyTools {
 			else if (thing != Piece.EMPTY) {
 				sign = -1;
 			}
-			sum += sign*simpleEvalParams(count);
+			sum += sign*evalParams(count);
 		}
 		
 		return sum;
@@ -261,27 +282,5 @@ public class MyTools {
 //		}
 //    	return sum;
     }
-    
-    
-    
-    private static int simpleEvalParams(int count) {
-    	switch (count) {
-    	case 0:
-			return 0;
-		case 1:
-			return 1;
-		case 2:
-			return 5;
-		case 3:
-			return 50;
-		case 4:
-			return 1000;
-		case 5:
-//			not always needed
-			return 100000;
-		default:
-			return 0;
-		}
 
-    }
 }
