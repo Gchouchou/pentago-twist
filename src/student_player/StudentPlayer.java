@@ -20,7 +20,7 @@ public class StudentPlayer extends PentagoPlayer {
         super("260871056");
     }
 
-    static private final int MAXDEPTH = 1;
+    static private final int MAXDEPTH = 2;
     private final static boolean MAX = true;
 	private final static boolean MIN = false;
 
@@ -44,15 +44,21 @@ public class StudentPlayer extends PentagoPlayer {
         	piece = PentagoBoardState.Piece.BLACK;
         	piece2 = PentagoBoardState.Piece.WHITE;
         }
-        ArrayList<PentagoMove> legalMoves = boardState.getAllLegalMoves();
-        PentagoBoardState clone;
+//        ArrayList<PentagoMove> legalMoves = boardState.getAllLegalMoves();
+		ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(boardState);
+		PentagoBoardState clone;
         int max = Integer.MIN_VALUE;
         Move bestMove = boardState.getRandomMove();
         int test;
         for (PentagoMove move : legalMoves) {
         	clone = (PentagoBoardState) boardState.clone();
         	clone.processMove(move);
-        	test = alphaBeta(clone, MAXDEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, MIN);
+        	if (piece == PentagoBoardState.Piece.WHITE) {
+				test = alphaBeta(clone, MAXDEPTH-1, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, MIN);
+			}
+        	else {
+				test = alphaBeta(clone, MAXDEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, MIN);
+			}
         	if (test > max) {
         		bestMove = move;
         		max = test; 
@@ -68,7 +74,8 @@ public class StudentPlayer extends PentagoPlayer {
     	if (position.gameOver() || depth == 0) {
     		return MyTools.evaluate(position, piece);
     	}
-    	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
+//    	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
+		ArrayList<PentagoMove> moves = MyTools.getLegalMoves(position);
 		for (PentagoMove m: moves) {
 			PentagoBoardState successor = (PentagoBoardState) position.clone();
 			successor.processMove(m);
