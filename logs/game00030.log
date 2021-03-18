@@ -1,0 +1,21 @@
+# Server version 0.08 running on QiDell:8123
+# Game ID: 30
+# Board class: pentago_twist.PentagoBoard
+# Timeout: 20000
+# First Move Timeout: 30000
+# Date: Wed Mar 17 23:21:03 EDT 2021
+# Starting at move 11
+# Player 1: Player-0, 'Human', running on QiDell
+# Player 2: Player-1, '260871056', running on QiDell
+START Player-0 Human
+START Player-1 260871056
+1 5 0 0 0
+1 1 0 0 1
+1 4 1 1 0
+2 1 0 0 1
+1 5 1 0 0
+4 1 1 0 1
+4 4 0 0 0
+3 1 0 0 1
+4 2 2 0 0
+4 3 3 0 1

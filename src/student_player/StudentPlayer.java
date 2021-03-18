@@ -20,28 +20,49 @@ public class StudentPlayer extends PentagoPlayer {
         super("260871056");
     }
 
+    static private final int MAXDEPTH = 1;
     /**
      * This is the primary method that you need to implement. The ``boardState``
      * object contains the current state of the game, which your agent must use to
      * make decisions.
      */
     public Move chooseMove(PentagoBoardState boardState) {
-        // You probably will make separate functions in MyTools.
-        // For example, maybe you'll need to load some pre-processed best opening
-        // strategies...
-        MyTools.getSomething();
-
-        // Is random the best you can do?
-        Move myMove = boardState.getRandomMove();
-
+    	PentagoBoardState.Piece piece;
+        PentagoBoardState.Piece piece2;
+        if ( boardState.getTurnPlayer() == PentagoBoardState.WHITE ) {
+        	piece = PentagoBoardState.Piece.WHITE;
+        	piece2 = PentagoBoardState.Piece.BLACK;
+        }
+        else {
+        	piece = PentagoBoardState.Piece.BLACK;
+        	piece2 = PentagoBoardState.Piece.WHITE;
+        }
+        ArrayList<PentagoMove> legalMoves = boardState.getAllLegalMoves();
+        PentagoBoardState clone;
+        int max = Integer.MIN_VALUE;
+        Move bestMove = boardState.getRandomMove();
+        int test = 0;
+        for (PentagoMove move : legalMoves) {
+        	if (move.getMoveCoord().getX() == 4 && move.getMoveCoord().getY() == 3 ) {
+        		System.out.println("Exists");
+        	}
+        	clone = (PentagoBoardState) boardState.clone();
+        	clone.processMove(move);
+        	test = alphaBeta(clone, MAXDEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, "MIN");
+        	if (test > max) {
+        		bestMove = move;
+        		max = test; 
+            	System.out.print(test + "\n");
+        	}
+        }
         // Return your move to be processed by the server.
-        return myMove;
+        return bestMove;
     }
     
     int alphaBeta(PentagoBoardState position, int depth, int alpha, int beta,
     		PentagoBoardState.Piece piece, String player) {
     	if (position.gameOver() || depth == 0) {
-    		return MyTools.evaluate(position, piece);
+    		return MyTools.simpleEvaluate(position, piece);
     	}
     	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
     	if (player.equals("MAX")) {
