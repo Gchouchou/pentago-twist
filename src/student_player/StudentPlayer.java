@@ -43,9 +43,6 @@ public class StudentPlayer extends PentagoPlayer {
         Move bestMove = boardState.getRandomMove();
         int test = 0;
         for (PentagoMove move : legalMoves) {
-        	if (move.getMoveCoord().getX() == 4 && move.getMoveCoord().getY() == 3 ) {
-        		System.out.println("Exists");
-        	}
         	clone = (PentagoBoardState) boardState.clone();
         	clone.processMove(move);
         	test = alphaBeta(clone, MAXDEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, "MIN");
