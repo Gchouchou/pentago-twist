@@ -11,7 +11,7 @@ import pentago_twist.PentagoCoord;
 
 public class MyTools {
     
-   
+//   region <Eval File Loading>
     private static final String FILENAME = "SIMPLE.txt";
     private static final Integer FILELENGTH = 32;
     
@@ -57,7 +57,8 @@ public class MyTools {
     		e.printStackTrace();
     	}
     }
-    
+// endregion
+//    region <Evaluation Function>
     private static int evalParams(int count) {
     	switch (count) {
     	case 0:
@@ -84,7 +85,7 @@ public class MyTools {
 //    	check if the game is over
     	if (boardState.gameOver()) {
     		int win = boardState.getWinner();
-    		Piece winner = Piece.EMPTY;
+    		Piece winner;
     		if (win == Board.DRAW) {
     			return 0;
     		}
@@ -282,5 +283,7 @@ public class MyTools {
 //		}
 //    	return sum;
     }
+// endregion
+
 
 }
