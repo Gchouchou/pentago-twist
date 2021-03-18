@@ -300,19 +300,18 @@ public class MyTools {
 			if (positions.add(boardTag(mat))) {
 //				new position
 				nonDupeMoves.add(m);
-//				rotate 3 times
-				for (int i = 0; i < 3; i++) {
-					rotateMatrix(mat);
-					positions.add(boardTag(mat));
-				}
-//				to go to new position
-				flipMatrix(mat);
+//				rotate 2 times
+			  	rotateMatrix(mat);
+				rotateMatrix(mat);
 				positions.add(boardTag(mat));
-//				rotate 3 times
-				for (int i = 0; i < 3; i++) {
-					rotateMatrix(mat);
-					positions.add(boardTag(mat));
-				}
+//				to go to new position
+//				flipMatrix(mat);
+//				positions.add(boardTag(mat));
+////				rotate 3 times
+//				for (int i = 0; i < 3; i++) {
+//					rotateMatrix(mat);
+//					positions.add(boardTag(mat));
+//				}
 			}
 		}
 		return nonDupeMoves;
