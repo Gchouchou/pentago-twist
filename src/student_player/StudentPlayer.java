@@ -65,7 +65,7 @@ public class StudentPlayer extends PentagoPlayer {
         	if (test > max) {
         		bestMove = move;
         		max = test; 
-            	System.out.print(test + "\n");
+//            	System.out.print(test + "\n");
             	if (max == Integer.MAX_VALUE) {break;}
         	}
         }
