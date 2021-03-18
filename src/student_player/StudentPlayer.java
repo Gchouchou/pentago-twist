@@ -27,6 +27,10 @@ public class StudentPlayer extends PentagoPlayer {
      * make decisions.
      */
     public Move chooseMove(PentagoBoardState boardState) {
+    	if (!MyTools.checkLoaded()) {
+    		MyTools.loadFile();
+    	}
+
     	PentagoBoardState.Piece piece;
         PentagoBoardState.Piece piece2;
         if ( boardState.getTurnPlayer() == PentagoBoardState.WHITE ) {
@@ -59,7 +63,7 @@ public class StudentPlayer extends PentagoPlayer {
     int alphaBeta(PentagoBoardState position, int depth, int alpha, int beta,
     		PentagoBoardState.Piece piece, String player) {
     	if (position.gameOver() || depth == 0) {
-    		return MyTools.simpleEvaluate(position, piece);
+    		return MyTools.evaluate(position, piece);
     	}
     	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
     	if (player.equals("MAX")) {
