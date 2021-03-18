@@ -21,7 +21,10 @@ public class StudentPlayer extends PentagoPlayer {
     }
 
     static private final int MAXDEPTH = 1;
-    /**
+    private final static boolean MAX = true;
+	private final static boolean MIN = false;
+
+	/**
      * This is the primary method that you need to implement. The ``boardState``
      * object contains the current state of the game, which your agent must use to
      * make decisions.
@@ -45,11 +48,11 @@ public class StudentPlayer extends PentagoPlayer {
         PentagoBoardState clone;
         int max = Integer.MIN_VALUE;
         Move bestMove = boardState.getRandomMove();
-        int test = 0;
+        int test;
         for (PentagoMove move : legalMoves) {
         	clone = (PentagoBoardState) boardState.clone();
         	clone.processMove(move);
-        	test = alphaBeta(clone, MAXDEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, "MIN");
+        	test = alphaBeta(clone, MAXDEPTH, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, MIN);
         	if (test > max) {
         		bestMove = move;
         		max = test; 
@@ -61,41 +64,40 @@ public class StudentPlayer extends PentagoPlayer {
     }
     
     int alphaBeta(PentagoBoardState position, int depth, int alpha, int beta,
-    		PentagoBoardState.Piece piece, String player) {
+    		PentagoBoardState.Piece piece, boolean isMAX) {
     	if (position.gameOver() || depth == 0) {
     		return MyTools.evaluate(position, piece);
     	}
     	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
-    	if (player.equals("MAX")) {
-    		for (PentagoMove m: moves) {
-    			PentagoBoardState successor = (PentagoBoardState) position.clone();
-    			successor.processMove(m);
-    			int value = alphaBeta(successor,depth-1,alpha,beta, piece ,"MIN");
-    			if (value > beta) {
+		for (PentagoMove m: moves) {
+			PentagoBoardState successor = (PentagoBoardState) position.clone();
+			successor.processMove(m);
+			int value = alphaBeta(successor,depth-1,alpha,beta, piece ,!isMAX);
+			if (isMAX) {
+				if (value > beta) {
     				return beta;
     			}
     			if (value > alpha)
     			{
     				alpha = value;
     			}
-    		}
-    		return alpha;
-    	}
-    	else {
-    		for ( PentagoMove m : moves ) {
-    			PentagoBoardState successor = (PentagoBoardState) position.clone();
-    			successor.processMove(m);
-    			int value = alphaBeta(successor,depth-1,alpha,beta,piece,"MAX");
-    			if (value <= alpha)
-    			{
-    				return alpha;
-    			}
-    			if (value < beta)
-    			{
-    				beta = value;
-    			}
-    		}
-    		return beta;
-    	}
-    }
+			}
+			else {
+				if (value <= alpha)
+			   {
+					return alpha;
+			   }
+			   if (value < beta)
+			   {
+					beta = value;
+			   }
+			}
+		}
+		if (isMAX) {
+			return alpha;
+		}
+		else {
+			return beta;
+		}
+	}
 }
