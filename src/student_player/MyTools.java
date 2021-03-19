@@ -142,150 +142,6 @@ public class MyTools {
 		}
 		
 		return sum;
-////    	check rows
-//    	for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
-//    		for (int x = 0; x < 2; x++) {
-//    			int count = 0;
-//    			Piece thing = Piece.EMPTY;
-//    			for (int i = 0; i < 5; i++) {
-//        			PentagoCoord startCoord = new PentagoCoord(x+i, y);
-////    				get what piece is at the location
-//    				Piece p = boardState.getPieceAt(startCoord);
-//    				if (p == Piece.EMPTY) {
-//    					continue;
-//    				}
-//    				if (thing == Piece.EMPTY) {
-//						thing = p;
-//						count++;
-//					}
-//					else if (p != thing) {
-//						count = 0;
-//						break;
-//					}
-//					else {
-//						count++;
-//					}
-//				}
-////    			scoring algo
-//    			int sign = 0;
-//    			if (thing == piece) {
-//    				sign = 1;
-//    			}
-//    			else if (thing != Piece.EMPTY) {
-//    				sign = -1;
-//    			}
-//    			sum += sign*simpleEvalParams(count);
-//    		}
-//		}
-//
-////    	check column
-//    	for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
-//    		for (int y = 0; y < 2; y++) {
-//    			int count = 0;
-//    			Piece thing = Piece.EMPTY;
-//    			for (int i = 0; i < 5; i++) {
-//        			PentagoCoord startCoord = new PentagoCoord(x, y+i);
-////    				get what piece is at the location
-//    				Piece p = boardState.getPieceAt(startCoord);
-//    				if (p == Piece.EMPTY) {
-//    					continue;
-//    				}
-//    				if (thing == Piece.EMPTY) {
-//						thing = p;
-//						count++;
-//					}
-//					else if (p != thing) {
-//						count = 0;
-//						break;
-//					}
-//					else {
-//						count++;
-//					}
-//				}
-////    			scoring algo
-//    			int sign = 0;
-//    			if (thing == piece) {
-//    				sign = 1;
-//    			}
-//    			else if (thing != Piece.EMPTY) {
-//    				sign = -1;
-//    			}
-//    			sum += sign*simpleEvalParams(count);
-//    		}
-//		}
-//    	
-////    	check right diag
-//    	for (int x = 0; x < 2; x++) {
-//    		for (int y = 0; y < 2; y++) {
-//    			int count = 0;
-//    			Piece thing = Piece.EMPTY;
-//    			for (int i = 0; i < 5; i++) {
-//        			PentagoCoord startCoord = new PentagoCoord(x+i, y+i);
-////    				get what piece is at the location
-//    				Piece p = boardState.getPieceAt(startCoord);
-//    				if (p == Piece.EMPTY) {
-//    					continue;
-//    				}
-//    				if (thing == Piece.EMPTY) {
-//						thing = p;
-//						count++;
-//					}
-//					else if (p != thing) {
-//						count = 0;
-//						break;
-//					}
-//					else{
-//						count++;
-//					}
-//				}
-////    			scoring algo
-//    			int sign = 0;
-//    			if (thing == piece) {
-//    				sign = 1;
-//    			}
-//    			else if (thing != Piece.EMPTY) {
-//    				sign = -1;
-//    			}
-//    			sum += sign*simpleEvalParams(count);
-//    		}
-//		}
-//    	
-////    	check left diag
-//    	for (int x = 0; x < 2; x++) {
-//    		for (int y = PentagoBoardState.BOARD_SIZE-2; y < PentagoBoardState.BOARD_SIZE; y++) {
-//    			int count = 0;
-//    			Piece thing = Piece.EMPTY;
-//    			for (int i = 0; i < 5; i++) {
-//        			PentagoCoord startCoord = new PentagoCoord(x+i, y-i);
-////    				get what piece is at the location
-//    				Piece p = boardState.getPieceAt(startCoord);
-//    				if (p == Piece.EMPTY) {
-//    					continue;
-//    				}
-//    				if (thing == Piece.EMPTY) {
-//						thing = p;
-//						count++;
-//					}
-//					else if (p != thing) {
-//						count = 0;
-//						break;
-//					}
-//					else {
-//						count++;
-//					}
-//				}
-////    			scoring algo
-//    			int sign = 0;
-//    			if (thing == piece) {
-//    				sign = 1;
-//    			}
-//    			else if (thing != Piece.EMPTY) {
-//    				sign = -1;
-//    			}
-//    			sum += sign*simpleEvalParams(count);
-//    		}
-//		}
-//    	return sum;
     }
 // endregion
 
@@ -308,60 +164,34 @@ public class MyTools {
 			if (positions.add(boardTag(mat))) {
 //				new position
 				nonDupeMoves.add(m);
-//				rotate 2 times
-			  	rotateMatrix(mat);
-				rotateMatrix(mat);
+//				rotate 180
+			  	rotate180(mat);
 				positions.add(boardTag(mat));
-//				to go to new position
-//				flipMatrix(mat);
-//				positions.add(boardTag(mat));
-////				rotate 3 times
-//				for (int i = 0; i < 3; i++) {
-//					rotateMatrix(mat);
-//					positions.add(boardTag(mat));
-//				}
 			}
 		}
 		return nonDupeMoves;
 	}
 
 //	rotating a board
-	private static void rotateMatrix(int mat[][]) {
-		// Consider all squares one by one
+	private static void rotate180(int mat[][]) {
+//        take all squares above half way
 		for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
-			// Consider elements in group
-			// of 4 in current square
-			for (int y = x; y < PentagoBoardState.BOARD_SIZE - x - 1; y++) {
-				// Store current cell in
-				// temp variable
+			for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
 				int temp = mat[x][y];
-
-				// Move values from right to top
-				mat[x][y] = mat[y][PentagoBoardState.BOARD_SIZE - 1 - x];
-
-				// Move values from bottom to right
-				mat[y][PentagoBoardState.BOARD_SIZE - 1 - x]
-						= mat[PentagoBoardState.BOARD_SIZE - 1 - x][PentagoBoardState.BOARD_SIZE - 1 - y];
-
-				// Move values from left to bottom
-				mat[PentagoBoardState.BOARD_SIZE - 1 - x][PentagoBoardState.BOARD_SIZE - 1 - y]
-						= mat[PentagoBoardState.BOARD_SIZE - 1 - y][x];
-
-				// Assign temp to left
-				mat[PentagoBoardState.BOARD_SIZE - 1 - y][x] = temp;
+				mat[x][y] = mat[PentagoBoardState.BOARD_SIZE - x][PentagoBoardState.BOARD_SIZE-y];
 			}
 		}
 	}
 //	flipping a board
-	private static void flipMatrix(int mat[][]) {
-		for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
-			for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
-				int temp = mat[x][y];
-				mat[x][y] = mat[x+PentagoBoardState.BOARD_SIZE / 2][y];
-				mat[x+PentagoBoardState.BOARD_SIZE / 2][y] = temp;
-			}
-		}
-	}
+//	private static void flipMatrix(int mat[][]) {
+//		for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
+//			for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+//				int temp = mat[x][y];
+//				mat[x][y] = mat[x+PentagoBoardState.BOARD_SIZE / 2][y];
+//				mat[x+PentagoBoardState.BOARD_SIZE / 2][y] = temp;
+//			}
+//		}
+//	}
 //	Getting Unique Tag of Matrix
 	private static long boardTag(int mat[][]) {
     	long index = 0;
@@ -491,6 +321,8 @@ public class MyTools {
 			board[coord.getX()][coord.getY()] = EMPTY;
 			if (turnPlayer == 0) {turnNumber --; }
 			turnPlayer = turnPlayer - 1;
+			evaluated = false;
+			gameOver = false;
 		}
 
 //		perform rotation
@@ -501,6 +333,7 @@ public class MyTools {
 				 default:
 					 flipQuadrant(quadrant);
 			}
+			evaluated = false;
 		}
 
 //		perform rotation
@@ -511,6 +344,7 @@ public class MyTools {
 				default:
 					flipQuadrant(quadrant);
 			}
+			evaluated = false;
 		}
 
 		private void rotateQuadrantRight(int quadrant) {
