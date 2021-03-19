@@ -423,9 +423,9 @@ public class MyTools {
             int x = 3 * (quadrant / 2);
             int y = 3 * (quadrant % 2);
             for (int i = 0; i < 3; i++) {
-                int temp = board[x][y + i];
-                board[x][y + i] = board[x + 2][y + i];
-                board[x + 2][y + i] = temp;
+                int temp = board[x + i][y];
+                board[x + i][y] = board[x+i][y+2];
+                board[x + i][y + 2] = temp;
             }
         }
 
