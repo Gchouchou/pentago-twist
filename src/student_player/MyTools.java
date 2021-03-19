@@ -178,7 +178,7 @@ public class MyTools {
 		for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
 			for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
 				int temp = mat[x][y];
-				mat[x][y] = mat[PentagoBoardState.BOARD_SIZE - x][PentagoBoardState.BOARD_SIZE-y];
+				mat[x][y] = mat[PentagoBoardState.BOARD_SIZE - x - 1][PentagoBoardState.BOARD_SIZE-y - 1];
 			}
 		}
 	}
