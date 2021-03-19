@@ -74,6 +74,7 @@ public class StudentPlayer extends PentagoPlayer {
                     break;
                 }
             }
+
         }
         long stopTime = System.nanoTime();
         System.out.println("Time Elapsed: " + (stopTime - startTime) / 1000000000);
