@@ -12,7 +12,10 @@ import pentago_twist.PentagoCoord;
 import pentago_twist.PentagoMove;
 
 public class MyTools {
-    
+	public static final int WHITE = 0;
+	public static final int BLACK = 1;
+	public static final int EMPTY = 3;
+
 //   region <Eval File Loading>
     private static final String FILENAME = "SIMPLE.txt";
     private static final Integer FILELENGTH = 32;
@@ -60,11 +63,10 @@ public class MyTools {
     	}
     }
 // endregion
+
 //    region <Evaluation Function>
     private static int evalParams(int count) {
     	switch (count) {
-    	case 0:
-			return 0;
 		case 1:
 			return 1;
 		case 2:
@@ -298,7 +300,7 @@ public class MyTools {
 	public static ArrayList<PentagoMove> getLegalMovesSymmetry(PentagoBoardState boardState) {
 		ArrayList<PentagoMove> moves = boardState.getAllLegalMoves();
 		ArrayList<PentagoMove> nonDupeMoves = new ArrayList<>(moves.size());
-		HashSet<Long> positions = new HashSet<Long>(1200);
+		HashSet<Long> positions = new HashSet<>(600);
 		for (PentagoMove m: moves) {
 			PentagoBoardState successor = (PentagoBoardState) boardState.clone();
 			successor.processMove(m);
@@ -386,13 +388,170 @@ public class MyTools {
 	private static int convertPiece(PentagoBoardState.Piece p) {
     	switch (p) {
 			case BLACK:
-				return 1;
+				return BLACK;
 			case WHITE:
-				return 2;
+				return WHITE;
 			default:
-				return 0;
+				return EMPTY;
 		}
 	}
 //	endregion
 
+//	faster board implementation and allows reversing moves
+    public class fastBoard {
+    	int[][] board;
+    	boolean evaluated;
+    	int score;
+    	boolean gameOver;
+    	int turnPlayer;
+    	int turnNumber;
+
+    	public fastBoard(PentagoBoardState boardState) {
+    		board = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
+			for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
+				for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+					board[x][y] = convertPiece(boardState.getPieceAt(x,y));
+				}
+			}
+			evaluated = false;
+			gameOver = false;
+			turnPlayer = boardState.getTurnPlayer();
+			turnNumber = boardState.getTurnNumber();
+		}
+
+		public boolean getGameOver() { return gameOver; }
+
+		public int getTurnNumber() { return turnNumber; }
+
+		public int evaluate(int piece) {
+    		if (evaluated) { return score; }
+    		evaluated = true;
+
+			score = 0;
+    		boolean win = false;
+    		boolean otherWin = false;
+
+			for (int [][] wins: template) {
+				int count = 0;
+				int thing = EMPTY;
+				for (int i = 0; i < 5; i++) {
+//				get what piece is at the location
+					int p = board[wins[i][0]][wins[i][1]];
+					if (p == EMPTY) {
+						continue;
+					}
+					if (thing == EMPTY) {
+						thing = p;
+						count++;
+					}
+					else if (p != thing) {
+						count = 0;
+						break;
+					}
+					else {
+						count++;
+					}
+				}
+//			scoring algo
+				int sign = 0;
+				if (thing == piece) {
+					sign = 1;
+					if (count == 5) { win = true; }
+				}
+				else if (thing != EMPTY) {
+					sign = -1;
+					if (count == 5) { otherWin = true; }
+				}
+//				it's a draw just break
+				if (win && otherWin) { this.score = 0; gameOver = true;
+				return this.score; }
+				score += sign*evalParams(count);
+			}
+
+			if (win) { score = Integer.MAX_VALUE; gameOver = true; }
+			if (otherWin) { score = Integer.MIN_VALUE; gameOver = true; }
+			return score;
+		}
+
+		public void doMove(PentagoMove move) {
+			evaluated = false;
+			assert (!gameOver);
+			assert (board[move.getMoveCoord().getX()][move.getMoveCoord().getY()] == EMPTY);
+			assert (move.getPlayerID() == turnPlayer);
+			PentagoCoord coord = move.getMoveCoord();
+			board[coord.getX()][coord.getY()] = turnPlayer;
+			twistQuadrant(move.getASwap(),move.getBSwap());
+			if (turnPlayer != 0) { turnNumber++;}
+			turnPlayer = turnPlayer - 1;
+		}
+
+		public void undoMove(PentagoMove move) {
+    		unTwistQuadrant(move.getASwap(),move.getBSwap());
+			PentagoCoord coord = move.getMoveCoord();
+			board[coord.getX()][coord.getY()] = EMPTY;
+			if (turnPlayer == 0) {turnNumber --; }
+			turnPlayer = turnPlayer - 1;
+		}
+
+//		perform rotation
+		public void unTwistQuadrant(int quadrant, int twistType) {
+			switch (twistType) {
+				 case 0:
+					 rotateQuadrantLeft(quadrant);
+				 default:
+					 flipQuadrant(quadrant);
+			}
+		}
+
+//		perform rotation
+		public void twistQuadrant(int quadrant, int twistType) {
+    	    switch (twistType) {
+				case 0:
+					rotateQuadrantRight(quadrant);
+				default:
+					flipQuadrant(quadrant);
+			}
+		}
+
+		private void rotateQuadrantRight(int quadrant) {
+    	    int x = 3*( quadrant%2 );
+			int y = 3*( quadrant/2 );
+			int temp = board[x][y];
+			board[x][y] = board[x][y+2];
+			board[x][y+2] = board[x+2][y+2];
+			board[x+2][y+2] = board[x+2][y];
+			board[x+2][y] = temp;
+			temp = board[x+1][y];
+			board[x+1][y] = board[x][y+1];
+			board[x][y+1] = board[x+1][y+2];
+			board[x+1][y+2] = board[x+2][y+1];
+			board[x+2][y+1] = temp;
+		}
+
+		private void rotateQuadrantLeft(int quadrant) {
+			int x = 3*( quadrant%2 );
+			int y = 3*( quadrant/2 );
+			int temp = board[x][y];
+			board[x][y] = board[x+2][y];
+			board[x+2][y] = board[x+2][y+2];
+			board[x+2][y+2] = board[x][y+2];
+			board[x][y+2] = temp;
+			temp = board[x+1][y];
+			board[x+1][y] = board[x+2][y+1];
+			board[x+2][y+1] = board[x+1][y+2];
+			board[x+1][y+2] = board[x][y+1];
+			board[x][y+1] = temp;
+		}
+
+		private void flipQuadrant(int quadrant) {
+			int x = 3*( quadrant%2 );
+			int y = 3*( quadrant/2 );
+			for (int i = 0; i < 3; i++) {
+				int temp = board[x][y+i];
+				board[x][y+i] = board[x+2][y+i];
+				board[x+2][y+i] = temp;
+			}
+		}
+
+	}
 }
