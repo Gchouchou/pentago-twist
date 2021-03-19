@@ -142,28 +142,31 @@ public class MyTools {
 
     //	region <Legal move Filtering>
 //	get legal moves up to symmetry
-    public static ArrayList<PentagoMove> getLegalMoves(PentagoBoardState boardState) {
-        if (boardState.getTurnNumber() < 2) {
-            return getLegalMovesSymmetry(boardState);
-        }
+    public static ArrayList<PentagoMove> getLegalMoves(FastBoard boardState) {
+//        if (boardState.getTurnNumber() < 2) {
+//            return getLegalMovesSymmetry(boardState);
+//        }
         return boardState.getAllLegalMoves();
     }
 
-    public static ArrayList<PentagoMove> getLegalMovesSymmetry(PentagoBoardState boardState) {
+    public static ArrayList<PentagoMove> getLegalMovesSymmetry(FastBoard boardState) {
         ArrayList<PentagoMove> moves = boardState.getAllLegalMoves();
         ArrayList<PentagoMove> nonDupeMoves = new ArrayList<>(moves.size());
         HashSet<Long> positions = new HashSet<>(600);
         for (PentagoMove m : moves) {
-            PentagoBoardState successor = (PentagoBoardState) boardState.clone();
-            successor.processMove(m);
-            int[][] mat = boardConvert(successor);
-            if (positions.add(boardTag(mat))) {
+//            PentagoBoardState successor = (PentagoBoardState) boardState.clone();
+//            successor.processMove(m);
+//            int[][] mat = boardConvert(successor);
+            boardState.doMove(m);
+            if (positions.add(boardState.getTag())) {
 //				new position
                 nonDupeMoves.add(m);
 //				rotate 180
-                rotate180(mat);
-                positions.add(boardTag(mat));
+                boardState.rotate180();
+                positions.add(boardState.getTag());
+                boardState.rotate180();
             }
+            boardState.undoMove(m);
         }
         return nonDupeMoves;
     }
@@ -175,6 +178,7 @@ public class MyTools {
             for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
                 int temp = mat[x][y];
                 mat[x][y] = mat[PentagoBoardState.BOARD_SIZE - x - 1][PentagoBoardState.BOARD_SIZE - y - 1];
+                mat[PentagoBoardState.BOARD_SIZE - x - 1][PentagoBoardState.BOARD_SIZE - y - 1] = temp;
             }
         }
     }
@@ -214,7 +218,7 @@ public class MyTools {
     }
 
     //	converting pieces to integers
-    private static int convertPiece(PentagoBoardState.Piece p) {
+    public static int convertPiece(PentagoBoardState.Piece p) {
         switch (p) {
             case BLACK:
                 return BLACK;
@@ -227,7 +231,7 @@ public class MyTools {
 //	endregion
 
     //	faster board implementation and allows reversing moves
-    public class fastBoard {
+    public static class FastBoard {
         int[][] board;
         boolean evaluated;
         int score;
@@ -235,7 +239,7 @@ public class MyTools {
         int turnPlayer;
         int turnNumber;
 
-        public fastBoard(PentagoBoardState boardState) {
+        public FastBoard(PentagoBoardState boardState) {
             board = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
             for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
                 for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
@@ -260,6 +264,7 @@ public class MyTools {
             ArrayList<PentagoMove> moves = new ArrayList<>();
             for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
                 for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+                    if (board[x][y] != EMPTY) {continue;}
                     for (int i = 0; i < 4; i++) {
                         for (int j = 0; j < 2; j++) {
                             moves.add(new PentagoMove(x, y, i, j, turnPlayer));
@@ -343,7 +348,7 @@ public class MyTools {
             if (turnPlayer != 0) {
                 turnNumber++;
             }
-            turnPlayer = turnPlayer - 1;
+            turnPlayer =  1 - turnPlayer ;
         }
 
         public void undoMove(PentagoMove move) {
@@ -353,7 +358,7 @@ public class MyTools {
             if (turnPlayer == 0) {
                 turnNumber--;
             }
-            turnPlayer = turnPlayer - 1;
+            turnPlayer = 1 - turnPlayer ;
             evaluated = false;
             gameOver = false;
         }
@@ -363,8 +368,10 @@ public class MyTools {
             switch (twistType) {
                 case 0:
                     rotateQuadrantLeft(quadrant);
+                    break;
                 default:
                     flipQuadrant(quadrant);
+                    break;
             }
             evaluated = false;
         }
@@ -374,15 +381,17 @@ public class MyTools {
             switch (twistType) {
                 case 0:
                     rotateQuadrantRight(quadrant);
+                    break;
                 default:
                     flipQuadrant(quadrant);
+                    break;
             }
             evaluated = false;
         }
 
-        private void rotateQuadrantRight(int quadrant) {
-            int x = 3 * (quadrant % 2);
-            int y = 3 * (quadrant / 2);
+        private void rotateQuadrantLeft(int quadrant) {
+            int x = 3 * (quadrant / 2);
+            int y = 3 * (quadrant % 2);
             int temp = board[x][y];
             board[x][y] = board[x][y + 2];
             board[x][y + 2] = board[x + 2][y + 2];
@@ -395,9 +404,9 @@ public class MyTools {
             board[x + 2][y + 1] = temp;
         }
 
-        private void rotateQuadrantLeft(int quadrant) {
-            int x = 3 * (quadrant % 2);
-            int y = 3 * (quadrant / 2);
+        private void rotateQuadrantRight(int quadrant) {
+            int x = 3 * (quadrant / 2);
+            int y = 3 * (quadrant % 2);
             int temp = board[x][y];
             board[x][y] = board[x + 2][y];
             board[x + 2][y] = board[x + 2][y + 2];
@@ -411,8 +420,8 @@ public class MyTools {
         }
 
         private void flipQuadrant(int quadrant) {
-            int x = 3 * (quadrant % 2);
-            int y = 3 * (quadrant / 2);
+            int x = 3 * (quadrant / 2);
+            int y = 3 * (quadrant % 2);
             for (int i = 0; i < 3; i++) {
                 int temp = board[x][y + i];
                 board[x][y + i] = board[x + 2][y + i];
@@ -420,5 +429,13 @@ public class MyTools {
             }
         }
 
+        private long getTag() {
+            return boardTag(board);
+        }
+
+        private void rotate180() {
+            MyTools.rotate180(board);
+        }
     }
+
 }

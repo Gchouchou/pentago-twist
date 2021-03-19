@@ -38,7 +38,7 @@ public class StudentPlayer extends PentagoPlayer {
         }
         long startTime = System.nanoTime();
 
-
+        MyTools.FastBoard fastBoard = new MyTools.FastBoard(boardState);
         PentagoBoardState.Piece piece;
         PentagoBoardState.Piece piece2;
         if (boardState.getTurnPlayer() == PentagoBoardState.WHITE) {
@@ -48,47 +48,54 @@ public class StudentPlayer extends PentagoPlayer {
             piece = PentagoBoardState.Piece.BLACK;
             piece2 = PentagoBoardState.Piece.WHITE;
         }
+
 //        ArrayList<PentagoMove> legalMoves = boardState.getAllLegalMoves();
-        ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(boardState);
-        PentagoBoardState clone;
+        ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard);
+//        PentagoBoardState clone;
         Move bestMove = boardState.getRandomMove();
         int test;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
         for (PentagoMove move : legalMoves) {
-            clone = (PentagoBoardState) boardState.clone();
-            clone.processMove(move);
+//            clone = (PentagoBoardState) boardState.clone();
+//            clone.processMove(move);
+            fastBoard.doMove(move);
             if (piece == PentagoBoardState.Piece.WHITE) {
-                test = alphaBeta(clone, MAXDEPTHWHITE, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, MAXDEPTHWHITE, alpha, beta, MyTools.convertPiece(piece), MIN);
             } else {
-                test = alphaBeta(clone, MAXDEPTHBLACK, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, MAXDEPTHBLACK, alpha, beta, MyTools.convertPiece(piece), MIN);
             }
+            fastBoard.undoMove(move);
             if (test > alpha) {
                 bestMove = move;
                 alpha = test;
-//            	System.out.print(test + "\n");
+            	System.out.print(test + "\n");
                 if (alpha == beta) {
                     break;
                 }
             }
         }
         long stopTime = System.nanoTime();
-        System.out.println("Time Elapsed: " + (stopTime - startTime) / 1000000000);
+//        System.out.println("Time Elapsed: " + (stopTime - startTime) / 1000000000);
         // Return your move to be processed by the server.
         return bestMove;
     }
 
-    int alphaBeta(PentagoBoardState position, int depth, int alpha, int beta,
-                  PentagoBoardState.Piece piece, boolean isMAX) {
-        if (position.gameOver() || depth == 0) {
-            return MyTools.evaluate(position, piece);
+    int alphaBeta(MyTools.FastBoard position, int depth, int alpha, int beta,
+                  int piece, boolean isMAX) {
+        position.evaluate(piece);
+        if (position.getGameOver() || depth == 0) {
+//            return MyTools.evaluate(position, piece);
+            return position.evaluate(piece);
         }
 //    	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
         ArrayList<PentagoMove> moves = MyTools.getLegalMoves(position);
         for (PentagoMove m : moves) {
-            PentagoBoardState successor = (PentagoBoardState) position.clone();
-            successor.processMove(m);
-            int value = alphaBeta(successor, depth - 1, alpha, beta, piece, !isMAX);
+//            PentagoBoardState successor = (PentagoBoardState) position.clone();
+//            successor.processMove(m);
+            position.doMove(m);
+            int value = alphaBeta(position, depth - 1, alpha, beta, piece, !isMAX);
+            position.undoMove(m);
             if (isMAX) {
                 if (value > beta) {
                     return beta;
