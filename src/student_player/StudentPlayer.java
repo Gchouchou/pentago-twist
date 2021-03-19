@@ -69,14 +69,14 @@ public class StudentPlayer extends PentagoPlayer {
             if (test > alpha) {
                 bestMove = move;
                 alpha = test;
-            	System.out.print(test + "\n");
+//            	System.out.print(test + "\n");
                 if (alpha == beta) {
                     break;
                 }
             }
         }
         long stopTime = System.nanoTime();
-//        System.out.println("Time Elapsed: " + (stopTime - startTime) / 1000000000);
+        System.out.println("Time Elapsed: " + (stopTime - startTime) / 1000000000);
         // Return your move to be processed by the server.
         return bestMove;
     }

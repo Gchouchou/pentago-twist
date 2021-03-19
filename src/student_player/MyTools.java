@@ -143,10 +143,10 @@ public class MyTools {
     //	region <Legal move Filtering>
 //	get legal moves up to symmetry
     public static ArrayList<PentagoMove> getLegalMoves(FastBoard boardState) {
-        if (boardState.getTurnNumber() < 2) {
+//        if (boardState.getTurnNumber() < 2) {
             return getLegalMovesSymmetry(boardState);
-        }
-        return boardState.getAllLegalMoves();
+//        }
+//        return boardState.getAllLegalMoves();
     }
 
     public static ArrayList<PentagoMove> getLegalMovesSymmetry(FastBoard boardState) {
@@ -161,10 +161,13 @@ public class MyTools {
             if (positions.add(boardState.getTag())) {
 //				new position
                 nonDupeMoves.add(m);
-//				rotate 180
-                boardState.rotate180();
-                positions.add(boardState.getTag());
-                boardState.rotate180();
+//                no point is searching for symmetries in position that are usually not symmetric
+                if (boardState.getTurnNumber() < 3) {
+    //				rotate 180
+                    boardState.rotate180();
+                    positions.add(boardState.getTag());
+                    boardState.rotate180();
+                }
             }
             boardState.undoMove(m);
         }
