@@ -50,23 +50,24 @@ public class StudentPlayer extends PentagoPlayer {
 //        ArrayList<PentagoMove> legalMoves = boardState.getAllLegalMoves();
 		ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(boardState);
 		PentagoBoardState clone;
-        int max = Integer.MIN_VALUE;
         Move bestMove = boardState.getRandomMove();
         int test;
-        for (PentagoMove move : legalMoves) {
+        int alpha = Integer.MIN_VALUE;
+		int beta = Integer.MAX_VALUE;
+		for (PentagoMove move : legalMoves) {
         	clone = (PentagoBoardState) boardState.clone();
         	clone.processMove(move);
         	if (piece == PentagoBoardState.Piece.WHITE) {
-				test = alphaBeta(clone, MAXDEPTHWHITE, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, MIN);
+				test = alphaBeta(clone, MAXDEPTHWHITE, alpha, beta, piece, MIN);
 			}
         	else {
-				test = alphaBeta(clone, MAXDEPTHBLACK, Integer.MIN_VALUE, Integer.MAX_VALUE, piece, MIN);
+				test = alphaBeta(clone, MAXDEPTHBLACK, alpha, beta, piece, MIN);
 			}
-        	if (test > max) {
+        	if (test > alpha) {
         		bestMove = move;
-        		max = test; 
+        		alpha = test;
 //            	System.out.print(test + "\n");
-            	if (max == Integer.MAX_VALUE) {break;}
+            	if (alpha == beta) {break;}
         	}
         }
 		long stopTime = System.nanoTime();
