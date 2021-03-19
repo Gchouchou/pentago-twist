@@ -143,9 +143,9 @@ public class MyTools {
     //	region <Legal move Filtering>
 //	get legal moves up to symmetry
     public static ArrayList<PentagoMove> getLegalMoves(FastBoard boardState) {
-//        if (boardState.getTurnNumber() < 2) {
-//            return getLegalMovesSymmetry(boardState);
-//        }
+        if (boardState.getTurnNumber() < 2) {
+            return getLegalMovesSymmetry(boardState);
+        }
         return boardState.getAllLegalMoves();
     }
 
@@ -154,9 +154,9 @@ public class MyTools {
         ArrayList<PentagoMove> nonDupeMoves = new ArrayList<>(moves.size());
         HashSet<Long> positions = new HashSet<>(600);
         for (PentagoMove m : moves) {
-//            PentagoBoardState successor = (PentagoBoardState) boardState.clone();
-//            successor.processMove(m);
-//            int[][] mat = boardConvert(successor);
+            PentagoBoardState successor = (PentagoBoardState) boardState.clone();
+            successor.processMove(m);
+            int[][] mat = boardConvert(successor);
             boardState.doMove(m);
             if (positions.add(boardState.getTag())) {
 //				new position
