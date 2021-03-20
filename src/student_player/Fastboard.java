@@ -19,7 +19,7 @@ public class FastBoard {
     public static final int BLACK = 1;
     public static final int EMPTY = 3;
 
-//    copy a boardState
+    //    copy a boardState
     public FastBoard(PentagoBoardState boardState) {
         board = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
         for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
@@ -41,12 +41,14 @@ public class FastBoard {
         return turnNumber;
     }
 
-//    Get all legal moves no brain
+    //    Get all legal moves no brain
     public ArrayList<PentagoMove> getAllLegalMoves() {
         ArrayList<PentagoMove> moves = new ArrayList<>();
         for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
             for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
-                if (board[x][y] != EMPTY) {continue;}
+                if (board[x][y] != EMPTY) {
+                    continue;
+                }
                 for (int i = 0; i < 4; i++) {
                     for (int j = 0; j < 2; j++) {
                         moves.add(new PentagoMove(x, y, i, j, turnPlayer));
@@ -124,6 +126,7 @@ public class FastBoard {
         return score;
     }
 
+    //    region Board Manipulation
     public void doMove(PentagoMove move) {
         evaluated = false;
         assert (!gameOver);
@@ -135,17 +138,17 @@ public class FastBoard {
         if (turnPlayer != 0) {
             turnNumber++;
         }
-        turnPlayer =  1 - turnPlayer ;
+        turnPlayer = 1 - turnPlayer;
     }
 
     public void undoMove(PentagoMove move) {
-        unTwistQuadrant(move.getASwap(), move.getBSwap());
+        untwistQuadrant(move.getASwap(), move.getBSwap());
         PentagoCoord coord = move.getMoveCoord();
         board[coord.getX()][coord.getY()] = EMPTY;
         if (turnPlayer == 0) {
             turnNumber--;
         }
-        turnPlayer = 1 - turnPlayer ;
+        turnPlayer = 1 - turnPlayer;
         evaluated = false;
         gameOver = false;
     }
@@ -160,11 +163,10 @@ public class FastBoard {
     }
 
     //		rotation the other way
-    public void unTwistQuadrant(int quadrant, int twistType) {
+    public void untwistQuadrant(int quadrant, int twistType) {
         if (twistType == 0) {
             rotateQuadrantLeft(quadrant);
-        }
-        else {
+        } else {
             flipQuadrant(quadrant);
         }
         evaluated = false;
@@ -206,7 +208,7 @@ public class FastBoard {
         int y = 3 * (quadrant % 2);
         for (int i = 0; i < 3; i++) {
             int temp = board[x + i][y];
-            board[x + i][y] = board[x+i][y+2];
+            board[x + i][y] = board[x + i][y + 2];
             board[x + i][y + 2] = temp;
         }
     }
@@ -218,5 +220,7 @@ public class FastBoard {
     public void rotate180() {
         MyTools.rotate180(board);
     }
+// #endregion
+
 }
 

@@ -50,7 +50,7 @@ public class StudentPlayer extends PentagoPlayer {
         }
 
 //        ArrayList<PentagoMove> legalMoves = boardState.getAllLegalMoves();
-        ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard);
+        ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard, MyTools.convertPiece(piece), MAX);
 //        PentagoBoardState clone;
         Move bestMove = boardState.getRandomMove();
         int test;
@@ -90,7 +90,7 @@ public class StudentPlayer extends PentagoPlayer {
             return position.evaluate(piece);
         }
 //    	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
-        ArrayList<PentagoMove> moves = MyTools.getLegalMoves(position);
+        ArrayList<PentagoMove> moves = MyTools.getLegalMoves(position, piece, isMAX);
         for (PentagoMove m : moves) {
 //            PentagoBoardState successor = (PentagoBoardState) position.clone();
 //            successor.processMove(m);

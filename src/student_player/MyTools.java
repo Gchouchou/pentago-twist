@@ -3,6 +3,8 @@ package student_player;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 
 import boardgame.Board;
@@ -70,9 +72,9 @@ public class MyTools {
             case 2:
                 return 5;
             case 3:
-                return 50;
+                return 47;
             case 4:
-                return 1000;
+                return 997;
             case 5:
 //			not always needed
                 return 100000;
@@ -138,11 +140,36 @@ public class MyTools {
 
     //	region <Legal move Filtering>
 //	get legal moves up to symmetry
-    public static ArrayList<PentagoMove> getLegalMoves(FastBoard boardState) {
+    public static ArrayList<PentagoMove> getLegalMoves(FastBoard boardState, int piece, boolean isMax) {
 //        if (boardState.getTurnNumber() < 2) {
-            return getLegalMovesSymmetry(boardState);
 //        }
 //        return boardState.getAllLegalMoves();
+        ArrayList<PentagoMove> list =  getLegalMovesSymmetry(boardState);
+//        test every transform and see which one improves our score
+        if (isMax) piece = 1 - piece;
+        int[][] array = new int[4][2];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 2; j++) {
+                boardState.twistQuadrant(i,j);
+                array[i][j] = boardState.evaluate(piece);
+                boardState.untwistQuadrant(i,j);
+            }
+        }
+//        we then sort moves by their transforms to hopefully get better moves first
+        Collections.sort(list, new moveComparator(array));
+//        Collections.shuffle(list);
+        return list;
+    }
+
+    public static class moveComparator implements Comparator<PentagoMove> {
+        int[][] saves;
+        public moveComparator(int[][] array) {
+            saves = array;
+        }
+        public int compare(PentagoMove m1, PentagoMove m2) {
+            return ((Integer) saves[m1.getASwap()][m1.getBSwap()]).compareTo(
+                    saves[m2.getASwap()][m2.getBSwap()]);
+        }
     }
 
     public static ArrayList<PentagoMove> getLegalMovesSymmetry(FastBoard boardState) {
