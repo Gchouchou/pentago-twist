@@ -8,7 +8,6 @@ import java.util.HashSet;
 import boardgame.Board;
 import pentago_twist.PentagoBoardState;
 import pentago_twist.PentagoBoardState.Piece;
-import pentago_twist.PentagoCoord;
 import pentago_twist.PentagoMove;
 
 public class MyTools {
@@ -172,7 +171,7 @@ public class MyTools {
     }
 
     //	rotating a board
-    public static void rotate180(int mat[][]) {
+    public static void rotate180(int[][] mat) {
 //        take all squares above half way
         for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
             for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
@@ -194,7 +193,7 @@ public class MyTools {
 //		}
 //	}
 //	Getting Unique Tag of Matrix
-    public static long boardTag(int mat[][]) {
+    public static long boardTag(int[][] mat) {
         long index = 0;
         for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
             for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
