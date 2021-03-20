@@ -38,7 +38,7 @@ public class StudentPlayer extends PentagoPlayer {
         }
         long startTime = System.nanoTime();
 
-        MyTools.FastBoard fastBoard = new MyTools.FastBoard(boardState);
+        FastBoard fastBoard = new FastBoard(boardState);
         PentagoBoardState.Piece piece;
         PentagoBoardState.Piece piece2;
         if (boardState.getTurnPlayer() == PentagoBoardState.WHITE) {
@@ -77,12 +77,12 @@ public class StudentPlayer extends PentagoPlayer {
 
         }
         long stopTime = System.nanoTime();
-        System.out.println("Time Elapsed: " + (stopTime - startTime) / 1000000000);
+        System.out.println("Time Elapsed: " + (stopTime - startTime) / 100000000);
         // Return your move to be processed by the server.
         return bestMove;
     }
 
-    int alphaBeta(MyTools.FastBoard position, int depth, int alpha, int beta,
+    int alphaBeta(FastBoard position, int depth, int alpha, int beta,
                   int piece, boolean isMAX) {
         position.evaluate(piece);
         if (position.getGameOver() || depth == 0) {
