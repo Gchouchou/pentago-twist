@@ -142,7 +142,7 @@ public class FastBoard {
     }
 
     public void undoMove(PentagoMove move) {
-        unTwistQuadrant(move.getASwap(), move.getBSwap());
+        untwistQuadrant(move.getASwap(), move.getBSwap());
         PentagoCoord coord = move.getMoveCoord();
         board[coord.getX()][coord.getY()] = EMPTY;
         if (turnPlayer == 0) {
@@ -163,7 +163,7 @@ public class FastBoard {
     }
 
     //		rotation the other way
-    public void unTwistQuadrant(int quadrant, int twistType) {
+    public void untwistQuadrant(int quadrant, int twistType) {
         if (twistType == 0) {
             rotateQuadrantLeft(quadrant);
         } else {
