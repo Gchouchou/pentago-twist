@@ -19,7 +19,7 @@ public class FastBoard {
     public static final int BLACK = 1;
     public static final int EMPTY = 3;
 
-    //    copy a boardState
+    //    copy a PentagoBoardState
     public FastBoard(PentagoBoardState boardState) {
         board = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
         for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
@@ -31,6 +31,20 @@ public class FastBoard {
         gameOver = false;
         turnPlayer = boardState.getTurnPlayer();
         turnNumber = boardState.getTurnNumber();
+    }
+
+    //    create a new board
+    public FastBoard() {
+        board = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
+        for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
+            for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+                board[x][y] = EMPTY;
+            }
+        }
+        evaluated = false;
+        gameOver = false;
+        turnPlayer = 0;
+        turnNumber = 0;
     }
 
     public boolean getGameOver() {
@@ -219,6 +233,10 @@ public class FastBoard {
 
     public void rotate180() {
         MyTools.rotate180(board);
+    }
+
+    public int getTurnPlayer() {
+        return turnPlayer;
     }
 // #endregion
 

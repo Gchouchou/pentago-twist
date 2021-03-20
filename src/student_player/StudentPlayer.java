@@ -23,7 +23,7 @@ public class StudentPlayer extends PentagoPlayer {
     }
 
     static private final int MAXDEPTHBLACK = 2;
-    static private final int MAXDEPTHWHITE = 2;
+    static private final int MAXDEPTHWHITE = 3;
     private final static boolean MAX = true;
     private final static boolean MIN = false;
 
@@ -36,23 +36,26 @@ public class StudentPlayer extends PentagoPlayer {
         if (!MyTools.checkLoaded()) {
             MyTools.loadFile();
         }
-        long startTime = System.nanoTime();
 
         FastBoard fastBoard = new FastBoard(boardState);
-        PentagoBoardState.Piece piece;
-        PentagoBoardState.Piece piece2;
-        if (boardState.getTurnPlayer() == PentagoBoardState.WHITE) {
-            piece = PentagoBoardState.Piece.WHITE;
-            piece2 = PentagoBoardState.Piece.BLACK;
-        } else {
-            piece = PentagoBoardState.Piece.BLACK;
-            piece2 = PentagoBoardState.Piece.WHITE;
-        }
+//        PentagoBoardState.Piece piece;
+//        PentagoBoardState.Piece piece2;
+//        if (boardState.getTurnPlayer() == PentagoBoardState.WHITE) {
+//            piece = PentagoBoardState.Piece.WHITE;
+//            piece2 = PentagoBoardState.Piece.BLACK;
+//        } else {
+//            piece = PentagoBoardState.Piece.BLACK;
+//            piece2 = PentagoBoardState.Piece.WHITE;
+//        }
+        return alphaBetaWrapper(fastBoard);
+    }
 
-//        ArrayList<PentagoMove> legalMoves = boardState.getAllLegalMoves();
-        ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard, MyTools.convertPiece(piece), MAX);
-//        PentagoBoardState clone;
-        Move bestMove = boardState.getRandomMove();
+//    AlphaBeta algorithm wrapper
+    public PentagoMove alphaBetaWrapper(FastBoard fastBoard) {
+        int piece = fastBoard.getTurnPlayer();
+        long startTime = System.nanoTime();
+        ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard, piece, MAX);
+        PentagoMove bestMove = legalMoves.get(0);
         int test;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
@@ -60,10 +63,10 @@ public class StudentPlayer extends PentagoPlayer {
 //            clone = (PentagoBoardState) boardState.clone();
 //            clone.processMove(move);
             fastBoard.doMove(move);
-            if (piece == PentagoBoardState.Piece.WHITE) {
-                test = alphaBeta(fastBoard, MAXDEPTHWHITE, alpha, beta, MyTools.convertPiece(piece), MIN);
+            if (piece == fastBoard.WHITE) {
+                test = alphaBeta(fastBoard, MAXDEPTHWHITE, alpha, beta, piece, MIN);
             } else {
-                test = alphaBeta(fastBoard, MAXDEPTHBLACK, alpha, beta, MyTools.convertPiece(piece), MIN);
+                test = alphaBeta(fastBoard, MAXDEPTHBLACK, alpha, beta, piece, MIN);
             }
             fastBoard.undoMove(move);
             if (test > alpha) {
