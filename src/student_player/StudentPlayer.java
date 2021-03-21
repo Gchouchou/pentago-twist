@@ -94,7 +94,8 @@ public class StudentPlayer extends PentagoPlayer {
         position.evaluate(piece);
         if (position.getGameOver() || depth == 0) {
 //            return MyTools.evaluate(position, piece);
-            return position.evaluate(piece);
+            return position.deepEvaluate(piece);
+//            return position.evaluate(piece);
         }
 //    	ArrayList<PentagoMove> moves = position.getAllLegalMoves();
         ArrayList<PentagoMove> moves = MyTools.getLegalMoves(position, piece, isMAX);
@@ -131,6 +132,24 @@ public class StudentPlayer extends PentagoPlayer {
         if (!MyTools.checkLoaded()) {
             MyTools.loadFile();
         }
+        for (int i = 1; i < 10; i++) {
+            for (int j = i; j < 100; j+= 10) {
+                for (int k = j; k < 500; k+= 50) {
+                    for (int l = k; l < 5000; l+=1000) {
+                        for (int m = 0; m < 2; m++) {
+                            MyTools.loadWeights(m,new int[]{0,i,j,k,l,0});
+                        }
+                        FastBoard board = new FastBoard();
+                        if (simulGame(board) != FastBoard.BLACK) {
+                            System.out.println(i+","+j+","+k+","+l);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    public static void openingMoveSimul() {
         Random rand = new Random();
         int[][] scores = new int[6][6];
         int[][] plays = new int[6][6];

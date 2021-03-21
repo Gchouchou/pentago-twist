@@ -126,7 +126,7 @@ public class FastBoard {
                 gameOver = true;
                 return this.score;
             }
-            score += sign * MyTools.evalParams(count);
+            score += sign * MyTools.evalParams(count,piece);
         }
 
         if (win) {
@@ -143,6 +143,32 @@ public class FastBoard {
             score = 0; gameOver = true; return 0;
         }
         return score;
+    }
+
+//    a more expensive evaluation function that hopefully distinguishes more moves
+    public int deepEvaluate(int piece) {
+        evaluate(piece);
+        if (gameOver|| piece == BLACK) {return score;}
+        int sum = 0;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
+                int x = i;
+                int y = j;
+                if (board[x][y] == piece) {
+                    sum += MyTools.linearWeights[i][j];
+                } else if (board[x][y] == 1 - piece) {
+                    sum -= MyTools.linearWeights[i][j];
+                }
+                x = PentagoBoardState.BOARD_SIZE - x - 1;
+                y = PentagoBoardState.BOARD_SIZE - y - 1;
+                if (board[x][y] == piece) {
+                    sum += MyTools.linearWeights[i][j];
+                } else if (board[x][y] == 1 - piece) {
+                    sum -= MyTools.linearWeights[i][j];
+                }
+            }
+        }
+        return score+sum;
     }
 
     //    region Board Manipulation

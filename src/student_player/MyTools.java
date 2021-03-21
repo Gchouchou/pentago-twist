@@ -7,19 +7,21 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 
-import boardgame.Board;
 import pentago_twist.PentagoBoardState;
-import pentago_twist.PentagoBoardState.Piece;
 import pentago_twist.PentagoMove;
 
 public class MyTools {
 
     //   region <Eval File Loading>
-    private static final String FILENAME = "SIMPLE.txt";
+    private static final String SIMPLETXT = "SIMPLE.txt";
     private static final Integer FILELENGTH = 32;
+    private static int[][] evalWeights;
+    private static final String LINEARCSV = "Linear.csv";
 
     private static boolean loaded = false;
 
+    public static ArrayList<int[][]> template;
+    public static int[][] linearWeights;
     //  method to read string and create the set of 5 coordinates.
     private static int[][] stringToComb(String s) {
         int[][] a = new int[5][2];
@@ -37,7 +39,6 @@ public class MyTools {
         return a;
     }
 
-    public static ArrayList<int[][]> template;
 
     public static boolean checkLoaded() {
         return loaded;
@@ -47,9 +48,7 @@ public class MyTools {
         template = new ArrayList<>(FILELENGTH);
         loaded = true;
         try {
-            FileReader fr = new FileReader("data/" + FILENAME);
-            //Now how to read the file and parse it
-            //create file reader and buffered reader
+            FileReader fr = new FileReader("data/" + SIMPLETXT);
             BufferedReader br = new BufferedReader(fr);
             String str;
             while ((str = br.readLine()) != null) {
@@ -60,82 +59,100 @@ public class MyTools {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        evalWeights = new int[2][];
+        evalWeights[FastBoard.WHITE] = new int[]{0,1,10,47,997,0};
+        evalWeights[FastBoard.BLACK] = evalWeights[FastBoard.WHITE];
+
+        linearWeights = new int[3][];
+        try {
+            FileReader fr = new FileReader("data/" + LINEARCSV);
+            BufferedReader br = new BufferedReader(fr);
+            String str;
+            for (int i = 0; i < 3; i++) {
+                str = br.readLine();
+                linearWeights[i] = strToArray(str);
+            }
+            br.close();
+            fr.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static int[] strToArray(String string) {
+        String[] arr = string.split(",");
+        assert (arr.length == 6);
+        int[] array = new int[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            array[i] = Integer.parseInt(arr[i]);
+        }
+        return array;
+    }
+
+//    change evaluation function weights for a particular color
+    public static void loadWeights(int piece, int[] arr) {
+        evalWeights[piece] = arr;
     }
 // endregion
 
 //    region <Evaluation Function>
 //    evaluation function based on how many rocks we have in a 5 block win
-    public static int evalParams(int count) {
-        switch (count) {
-            case 1:
-                return 1;
-            case 2:
-                return 5;
-            case 3:
-                return 47;
-            case 4:
-                return 997;
-            case 5:
-//			not always needed
-                return 100000;
-            default:
-                return 0;
-        }
-
+    public static int evalParams(int count, int piece) {
+        return evalWeights[piece][count];
     }
     // check all win cons and count how many consecutive pieces we have
-    public static int evaluate(PentagoBoardState boardState, Piece piece) {
-//    	check if the game is over
-        if (boardState.gameOver()) {
-            int win = boardState.getWinner();
-            Piece winner;
-            if (win == Board.DRAW) {
-                return 0;
-            } else if (win == PentagoBoardState.WHITE) {
-                winner = Piece.WHITE;
-            } else {
-                winner = Piece.BLACK;
-            }
-            if (winner == piece) {
-                return Integer.MAX_VALUE;
-            } else {
-                return Integer.MIN_VALUE;
-            }
-        }
-
-        int sum = 0;
-
-        for (int[][] wins : template) {
-            int count = 0;
-            Piece thing = Piece.EMPTY;
-            for (int i = 0; i < 5; i++) {
-//				get what piece is at the location
-                Piece p = boardState.getPieceAt(wins[i][0], wins[i][1]);
-                if (p == Piece.EMPTY) {
-                    continue;
-                }
-                if (thing == Piece.EMPTY) {
-                    thing = p;
-                    count++;
-                } else if (p != thing) {
-                    count = 0;
-                    break;
-                } else {
-                    count++;
-                }
-            }
-//			scoring algo
-            int sign = 0;
-            if (thing == piece) {
-                sign = 1;
-            } else if (thing != Piece.EMPTY) {
-                sign = -1;
-            }
-            sum += sign * evalParams(count);
-        }
-
-        return sum;
-    }
+//    public static int evaluate(PentagoBoardState boardState, Piece piece) {
+////    	check if the game is over
+//        if (boardState.gameOver()) {
+//            int win = boardState.getWinner();
+//            Piece winner;
+//            if (win == Board.DRAW) {
+//                return 0;
+//            } else if (win == PentagoBoardState.WHITE) {
+//                winner = Piece.WHITE;
+//            } else {
+//                winner = Piece.BLACK;
+//            }
+//            if (winner == piece) {
+//                return Integer.MAX_VALUE;
+//            } else {
+//                return Integer.MIN_VALUE;
+//            }
+//        }
+//
+//        int sum = 0;
+//
+//        for (int[][] wins : template) {
+//            int count = 0;
+//            Piece thing = Piece.EMPTY;
+//            for (int i = 0; i < 5; i++) {
+////				get what piece is at the location
+//                Piece p = boardState.getPieceAt(wins[i][0], wins[i][1]);
+//                if (p == Piece.EMPTY) {
+//                    continue;
+//                }
+//                if (thing == Piece.EMPTY) {
+//                    thing = p;
+//                    count++;
+//                } else if (p != thing) {
+//                    count = 0;
+//                    break;
+//                } else {
+//                    count++;
+//                }
+//            }
+////			scoring algo
+//            int sign = 0;
+//            if (thing == piece) {
+//                sign = 1;
+//            } else if (thing != Piece.EMPTY) {
+//                sign = -1;
+//            }
+//            sum += sign * evalParams(count,piece);
+//        }
+//
+//        return sum;
+//    }
 // endregion
 
     //	region <Legal move Filtering>
