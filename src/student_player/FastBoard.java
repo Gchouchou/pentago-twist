@@ -8,12 +8,12 @@ import java.util.ArrayList;
 
 //	faster board implementation and allows reversing moves
 public class FastBoard {
-    int[][] board;
+    public int[][] board;
     boolean evaluated;
     int score;
     boolean gameOver;
-    int turnPlayer;
-    int turnNumber;
+    public int turnPlayer;
+    public int turnNumber;
 
     public static final int WHITE = 0;
     public static final int BLACK = 1;
@@ -132,10 +132,15 @@ public class FastBoard {
         if (win) {
             score = Integer.MAX_VALUE;
             gameOver = true;
+            return score;
         }
         if (otherWin) {
             score = Integer.MIN_VALUE;
             gameOver = true;
+            return score;
+        }
+        if (gameOver || turnNumber >= 18) {
+            score = 0; gameOver = true; return 0;
         }
         return score;
     }
