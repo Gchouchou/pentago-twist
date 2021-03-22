@@ -12,6 +12,8 @@ import pentago_twist.PentagoPlayer;
 import pentago_twist.PentagoBoardState;
 import pentago_twist.PentagoMove;
 
+import student_player.MyTools.FastBoard;
+
 /**
  * A player file submitted by a student.
  */

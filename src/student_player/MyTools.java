@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 
 import pentago_twist.PentagoBoardState;
+import pentago_twist.PentagoCoord;
 import pentago_twist.PentagoMove;
 
 public class MyTools {
@@ -60,8 +61,8 @@ public class MyTools {
             e.printStackTrace();
         }
         evalWeights = new int[2][];
-        evalWeights[FastBoard.WHITE] = new int[]{0,1,10,47,997,0};
-        evalWeights[FastBoard.BLACK] = evalWeights[FastBoard.WHITE];
+        evalWeights[FastBoard.WHITE] = new int[]{0,0,0,47,997,0};
+        evalWeights[FastBoard.BLACK] = new int[]{0,1,10,47,997,0};
 
         linearWeights = new int[3][];
         try {
@@ -95,65 +96,10 @@ public class MyTools {
     }
 // endregion
 
-//    region <Evaluation Function>
 //    evaluation function based on how many rocks we have in a 5 block win
     public static int evalParams(int count, int piece) {
         return evalWeights[piece][count];
     }
-    // check all win cons and count how many consecutive pieces we have
-//    public static int evaluate(PentagoBoardState boardState, Piece piece) {
-////    	check if the game is over
-//        if (boardState.gameOver()) {
-//            int win = boardState.getWinner();
-//            Piece winner;
-//            if (win == Board.DRAW) {
-//                return 0;
-//            } else if (win == PentagoBoardState.WHITE) {
-//                winner = Piece.WHITE;
-//            } else {
-//                winner = Piece.BLACK;
-//            }
-//            if (winner == piece) {
-//                return Integer.MAX_VALUE;
-//            } else {
-//                return Integer.MIN_VALUE;
-//            }
-//        }
-//
-//        int sum = 0;
-//
-//        for (int[][] wins : template) {
-//            int count = 0;
-//            Piece thing = Piece.EMPTY;
-//            for (int i = 0; i < 5; i++) {
-////				get what piece is at the location
-//                Piece p = boardState.getPieceAt(wins[i][0], wins[i][1]);
-//                if (p == Piece.EMPTY) {
-//                    continue;
-//                }
-//                if (thing == Piece.EMPTY) {
-//                    thing = p;
-//                    count++;
-//                } else if (p != thing) {
-//                    count = 0;
-//                    break;
-//                } else {
-//                    count++;
-//                }
-//            }
-////			scoring algo
-//            int sign = 0;
-//            if (thing == piece) {
-//                sign = 1;
-//            } else if (thing != Piece.EMPTY) {
-//                sign = -1;
-//            }
-//            sum += sign * evalParams(count,piece);
-//        }
-//
-//        return sum;
-//    }
-// endregion
 
     //	region <Legal move Filtering>
 //	get legal moves up to symmetry
@@ -226,16 +172,6 @@ public class MyTools {
         }
     }
 
-    //	flipping a board
-//	private static void flipMatrix(int mat[][]) {
-//		for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
-//			for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
-//				int temp = mat[x][y];
-//				mat[x][y] = mat[x+PentagoBoardState.BOARD_SIZE / 2][y];
-//				mat[x+PentagoBoardState.BOARD_SIZE / 2][y] = temp;
-//			}
-//		}
-//	}
 //	Getting Unique Tag of Matrix
     public static long boardTag(int[][] mat) {
         long index = 0;
@@ -273,4 +209,270 @@ public class MyTools {
     }
 //	endregion
 
+    //	faster board implementation and allows reversing moves
+    public static class FastBoard {
+        public int[][] board;
+        boolean evaluated;
+        int score;
+        boolean gameOver;
+        public int turnPlayer;
+        public int turnNumber;
+
+        public static final int WHITE = 0;
+        public static final int BLACK = 1;
+        public static final int EMPTY = 3;
+
+        //    copy a PentagoBoardState
+        public FastBoard(PentagoBoardState boardState) {
+            board = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
+            for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
+                for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+                    board[x][y] = MyTools.convertPiece(boardState.getPieceAt(x, y));
+                }
+            }
+            evaluated = false;
+            gameOver = false;
+            turnPlayer = boardState.getTurnPlayer();
+            turnNumber = boardState.getTurnNumber();
+        }
+
+        //    create a new board
+        public FastBoard() {
+            board = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
+            for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
+                for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+                    board[x][y] = EMPTY;
+                }
+            }
+            evaluated = false;
+            gameOver = false;
+            turnPlayer = 0;
+            turnNumber = 0;
+        }
+
+        public boolean getGameOver() {
+            return gameOver;
+        }
+
+        public int getTurnNumber() {
+            return turnNumber;
+        }
+
+        //    Get all legal moves no brain
+        public ArrayList<PentagoMove> getAllLegalMoves() {
+            ArrayList<PentagoMove> moves = new ArrayList<>();
+            for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
+                for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+                    if (board[x][y] != EMPTY) {
+                        continue;
+                    }
+                    for (int i = 0; i < 4; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            moves.add(new PentagoMove(x, y, i, j, turnPlayer));
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        public int evaluate(int piece) {
+            if (evaluated) {
+                return score;
+            }
+            evaluated = true;
+
+            score = 0;
+            boolean win = false;
+            boolean otherWin = false;
+
+            for (int[][] wins : MyTools.template) {
+                int count = 0;
+                int thing = EMPTY;
+                for (int i = 0; i < 5; i++) {
+//				get what piece is at the location
+                    int p = board[wins[i][0]][wins[i][1]];
+//                skip when we see nothing
+                    if (p == EMPTY) {
+                        continue;
+                    }
+//                update if it is the first piece we saw
+                    if (thing == EMPTY) {
+                        thing = p;
+                        count++;
+                    } else if (p != thing) {
+//                    different colored piece we stop counting
+                        count = 0;
+                        break;
+                    } else {
+//                    same colored piece we continue
+                        count++;
+                    }
+                }
+//			scoring algo
+//            check what color were the pieces
+                int sign = 0;
+                if (thing == piece) {
+                    sign = 1;
+                    if (count == 5) {
+                        win = true;
+                    }
+                } else if (thing != EMPTY) {
+                    sign = -1;
+                    if (count == 5) {
+                        otherWin = true;
+                    }
+                }
+//				it's a draw just break
+                if (win && otherWin) {
+                    this.score = 0;
+                    gameOver = true;
+                    return this.score;
+                }
+                score += sign * MyTools.evalParams(count,piece);
+            }
+
+            if (win) {
+                score = Integer.MAX_VALUE;
+                gameOver = true;
+                return score;
+            }
+            if (otherWin) {
+                score = Integer.MIN_VALUE;
+                gameOver = true;
+                return score;
+            }
+            if (gameOver || turnNumber >= 18) {
+                score = 0; gameOver = true; return 0;
+            }
+            return score;
+        }
+
+        //    a more expensive evaluation function that hopefully distinguishes more moves
+        public int deepEvaluate(int piece) {
+            evaluate(piece);
+            if (gameOver|| piece == BLACK) {return score;}
+            int sum = 0;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
+                    int x = i;
+                    int y = j;
+                    if (board[x][y] == piece) {
+                        sum += MyTools.linearWeights[i][j];
+                    } else if (board[x][y] == 1 - piece) {
+                        sum -= MyTools.linearWeights[i][j];
+                    }
+                    x = PentagoBoardState.BOARD_SIZE - x - 1;
+                    y = PentagoBoardState.BOARD_SIZE - y - 1;
+                    if (board[x][y] == piece) {
+                        sum += MyTools.linearWeights[i][j];
+                    } else if (board[x][y] == 1 - piece) {
+                        sum -= MyTools.linearWeights[i][j];
+                    }
+                }
+            }
+            return score+sum;
+        }
+
+        //    region Board Manipulation
+        public void doMove(PentagoMove move) {
+            evaluated = false;
+            assert (!gameOver);
+            assert (board[move.getMoveCoord().getX()][move.getMoveCoord().getY()] == EMPTY);
+            assert (move.getPlayerID() == turnPlayer);
+            PentagoCoord coord = move.getMoveCoord();
+            board[coord.getX()][coord.getY()] = turnPlayer;
+            twistQuadrant(move.getASwap(), move.getBSwap());
+            if (turnPlayer != 0) {
+                turnNumber++;
+            }
+            turnPlayer = 1 - turnPlayer;
+        }
+
+        public void undoMove(PentagoMove move) {
+            untwistQuadrant(move.getASwap(), move.getBSwap());
+            PentagoCoord coord = move.getMoveCoord();
+            board[coord.getX()][coord.getY()] = EMPTY;
+            if (turnPlayer == 0) {
+                turnNumber--;
+            }
+            turnPlayer = 1 - turnPlayer;
+            evaluated = false;
+            gameOver = false;
+        }
+
+        //		perform rotation
+        public void twistQuadrant(int quadrant, int twistType) {
+            if (twistType == 0)
+                rotateQuadrantRight(quadrant);
+            else
+                flipQuadrant(quadrant);
+            evaluated = false;
+        }
+
+        //		rotation the other way
+        public void untwistQuadrant(int quadrant, int twistType) {
+            if (twistType == 0) {
+                rotateQuadrantLeft(quadrant);
+            } else {
+                flipQuadrant(quadrant);
+            }
+            evaluated = false;
+        }
+
+        private void rotateQuadrantLeft(int quadrant) {
+//        center starting point
+            int x = 3 * (quadrant / 2);
+            int y = 3 * (quadrant % 2);
+            int temp = board[x][y];
+            board[x][y] = board[x][y + 2];
+            board[x][y + 2] = board[x + 2][y + 2];
+            board[x + 2][y + 2] = board[x + 2][y];
+            board[x + 2][y] = temp;
+            temp = board[x + 1][y];
+            board[x + 1][y] = board[x][y + 1];
+            board[x][y + 1] = board[x + 1][y + 2];
+            board[x + 1][y + 2] = board[x + 2][y + 1];
+            board[x + 2][y + 1] = temp;
+        }
+
+        private void rotateQuadrantRight(int quadrant) {
+            int x = 3 * (quadrant / 2);
+            int y = 3 * (quadrant % 2);
+            int temp = board[x][y];
+            board[x][y] = board[x + 2][y];
+            board[x + 2][y] = board[x + 2][y + 2];
+            board[x + 2][y + 2] = board[x][y + 2];
+            board[x][y + 2] = temp;
+            temp = board[x + 1][y];
+            board[x + 1][y] = board[x + 2][y + 1];
+            board[x + 2][y + 1] = board[x + 1][y + 2];
+            board[x + 1][y + 2] = board[x][y + 1];
+            board[x][y + 1] = temp;
+        }
+
+        private void flipQuadrant(int quadrant) {
+            int x = 3 * (quadrant / 2);
+            int y = 3 * (quadrant % 2);
+            for (int i = 0; i < 3; i++) {
+                int temp = board[x + i][y];
+                board[x + i][y] = board[x + i][y + 2];
+                board[x + i][y + 2] = temp;
+            }
+        }
+
+        public long getTag() {
+            return MyTools.boardTag(board);
+        }
+
+        public void rotate180() {
+            MyTools.rotate180(board);
+        }
+
+        public int getTurnPlayer() {
+            return turnPlayer;
+        }
+// #endregion
+
+    }
 }
