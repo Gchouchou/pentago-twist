@@ -29,7 +29,7 @@ public class StudentPlayer extends PentagoPlayer {
     }
 
     static private final int MAXDEPTHBLACK = 2;
-    static private final int MAXDEPTHWHITE = 2;
+    static private final int MAXDEPTHWHITE = 1;
     private final static boolean MAX = true;
     private final static boolean MIN = false;
 
@@ -44,22 +44,22 @@ public class StudentPlayer extends PentagoPlayer {
         }
 
         FastBoard fastBoard = new FastBoard(boardState);
-//        PentagoBoardState.Piece piece;
-//        PentagoBoardState.Piece piece2;
-//        if (boardState.getTurnPlayer() == PentagoBoardState.WHITE) {
-//            piece = PentagoBoardState.Piece.WHITE;
-//            piece2 = PentagoBoardState.Piece.BLACK;
-//        } else {
-//            piece = PentagoBoardState.Piece.BLACK;
-//            piece2 = PentagoBoardState.Piece.WHITE;
-//        }
-        return alphaBetaWrapper(fastBoard);
+        long startTime = System.nanoTime();
+        PentagoMove move = alphaBetaWrapper(fastBoard);
+        long stopTime = System.nanoTime();
+        if (stopTime- startTime <1000000) {
+//            go deeper when we finish it in less 0.01 seconds
+            return alphaBetaWrapper(fastBoard,MAXDEPTHWHITE+1,MAXDEPTHBLACK+1);
+        }
+        return move;
+    }
+    public PentagoMove alphaBetaWrapper(FastBoard fastBoard) {
+        return alphaBetaWrapper(fastBoard,MAXDEPTHWHITE,MAXDEPTHBLACK);
     }
 
 //    AlphaBeta algorithm wrapper
-    public PentagoMove alphaBetaWrapper(FastBoard fastBoard) {
+    public PentagoMove alphaBetaWrapper(FastBoard fastBoard,int maxDepthWhite, int maxDepthBlack) {
         int piece = fastBoard.getTurnPlayer();
-        long startTime = System.nanoTime();
         ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard, piece, MAX);
         PentagoMove bestMove = legalMoves.get(0);
         int test;
@@ -70,9 +70,9 @@ public class StudentPlayer extends PentagoPlayer {
 //            clone.processMove(move);
             fastBoard.doMove(move);
             if (piece == fastBoard.WHITE) {
-                test = alphaBeta(fastBoard, MAXDEPTHWHITE, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, maxDepthWhite, alpha, beta, piece, MIN);
             } else {
-                test = alphaBeta(fastBoard, MAXDEPTHBLACK, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, maxDepthBlack, alpha, beta, piece, MIN);
             }
             fastBoard.undoMove(move);
             if (test > alpha) {
@@ -85,7 +85,6 @@ public class StudentPlayer extends PentagoPlayer {
             }
 
         }
-        long stopTime = System.nanoTime();
 //        System.out.println("Time Elapsed: " + (stopTime - startTime) / 100000000);
         // Return your move to be processed by the server.
         return bestMove;
@@ -134,23 +133,117 @@ public class StudentPlayer extends PentagoPlayer {
         if (!MyTools.checkLoaded()) {
             MyTools.loadFile();
         }
-        for (int i = 1; i < 10; i++) {
-            for (int j = i; j < 100; j+= 10) {
-                for (int k = j; k < 500; k+= 50) {
-                    for (int l = k; l < 5000; l+=1000) {
-                        for (int m = 0; m < 2; m++) {
-                            MyTools.loadWeights(m,new int[]{0,i,j,k,l,0});
-                        }
-                        FastBoard board = new FastBoard();
-                        if (simulGame(board) != FastBoard.BLACK) {
-                            System.out.println(i+","+j+","+k+","+l);
-                            break;
+        int[] startRatios = new int[]{0,0,0,0};
+        MyTools.loadWeights(0,evaluationParameters.getWeightsFromRatios(startRatios));
+        MyTools.loadWeights(1,evaluationParameters.getWeightsFromRatios(startRatios));
+//        10 iterations of back and fourth.
+        for (int i = 0; i < 10; i++) {
+            int winner = simulGame(new FastBoard());
+            boolean finding = false;
+            for (int weight1 = 0; weight1 < 3; weight1++) {
+                for (int weight2 = 0; weight2 < 5 && !finding; weight2++) {
+                    for (int weight3 = 0; weight3 < 5 && !finding; weight3++) {
+                        for (int weight4 = 0; weight4 < 4 && !finding; weight4++) {
+                            MyTools.loadWeights(1-winner,
+                                    evaluationParameters.getWeightsFromRatios(weight1,weight2,weight3,weight4));
+                            int test = simulGame(new FastBoard());
+//                            if it is a different winner and it is not a tie
+                            if (test != winner && test != 3) {
+                                int[]update =
+                                        evaluationParameters.getWeightsFromRatios(weight1,weight2,weight3,weight4);
+                                System.out.println("Loser: " + winner);
+                                System.out.println("New weights: {"+ update[0] + "," + update[1] + ","
+                                + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
+                                finding= true;
+                            }
                         }
                     }
                 }
             }
+            if (!finding) {
+                System.out.println("Could not beat");
+                break;
+            }
         }
     }
+
+//  class that generalize a evaluation parameters
+    static class evaluationParameters {
+//        int array of size 6 for each count
+       public int[] weights;
+//       the ratio between the weights size 5
+       private int[] ratios;
+
+       public static int[] getWeightsFromRatios(int[] ratios) {
+//           int[] newWeights = new int[6];
+//           newWeights[0] = 0;
+//           newWeights[1] = ratios[0];
+//           newWeights[2] = Integer.max(newWeights[1],1) * ratios[1];
+//           newWeights[3] = Integer.max(newWeights[2],10) * ratios[2];
+//           newWeights[4] = Integer.max(newWeights[3],10) * ratios[3];
+//           newWeights[5] = 0;
+           return getWeightsFromRatios(ratios[0],ratios[1], ratios[2], ratios[3]);
+       }
+
+       public static int[] getWeightsFromRatios(int weight1,int weight2,int weight3,int weight4) {
+           int ratio1 = weight1;
+           int ratio2 = weight2;
+           int ratio3;
+           switch (weight3) {
+               case 0:
+                   ratio3 = 1;
+                   break;
+               case 1:
+                   ratio3 = 3;
+                   break;
+               case 2:
+                   ratio3 = 5;
+                   break;
+               default:
+                   ratio3 = 10;
+                   break;
+           }
+           int ratio4;
+           switch (weight4) {
+               case 0:
+                   ratio4 = 2;
+                   break;
+               case 1:
+                   ratio4 = 3;
+                   break;
+               case 2:
+                   ratio4 = 5;
+                   break;
+               default:
+                   ratio4 = 10;
+                   break;
+           }
+           int[] newWeights = new int[6];
+           newWeights[0] = 0;
+           newWeights[1] = ratio1;
+           newWeights[2] = Integer.max(newWeights[1],1) * ratio2;
+           newWeights[3] = Integer.max(newWeights[2],5) * ratio3;
+           newWeights[4] = Integer.max(newWeights[3],10) * ratio4;
+           newWeights[5] = 0;
+           return newWeights;
+       }
+
+/*
+    The possible ratios for each weight:
+    1: 0,1,2
+    2: 0,1,2,3
+    3: 1,5,10,20
+    4: 5,10,15,20,30,50,
+ */
+       public static int[] copy(int[] base) {
+           int[] copy = new int[base.length];
+           for (int i = 0; i < base.length; i++) {
+               copy[i] = base[i];
+           }
+           return copy;
+       }
+    }
+
     public static void openingMoveSimul() {
         Random rand = new Random();
         int[][] scores = new int[6][6];
@@ -235,6 +328,7 @@ public class StudentPlayer extends PentagoPlayer {
     }
 
 //    game simulation where we return the piece that won
+//    3 means a draw.
     static int simulGame(FastBoard board) {
         board.evaluate(FastBoard.WHITE);
         StudentPlayer player1 = new StudentPlayer();

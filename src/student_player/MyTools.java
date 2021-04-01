@@ -61,8 +61,8 @@ public class MyTools {
             e.printStackTrace();
         }
         evalWeights = new int[2][];
-        evalWeights[FastBoard.WHITE] = new int[]{0,0,0,47,997,0};
-        evalWeights[FastBoard.BLACK] = new int[]{0,1,10,47,997,0};
+        evalWeights[FastBoard.WHITE] = new int[]{0,0,3,5,20,0};
+        evalWeights[FastBoard.BLACK] = new int[]{0,0,0,15,30,0};
 
         linearWeights = new int[3][];
         try {
@@ -80,6 +80,7 @@ public class MyTools {
         }
     }
 
+//    take csv and convert to array
     private static int[] strToArray(String string) {
         String[] arr = string.split(",");
         assert (arr.length == 6);
@@ -135,6 +136,7 @@ public class MyTools {
         }
     }
 
+//    get all moves up to symmetry
     public static ArrayList<PentagoMove> getLegalMovesSymmetry(FastBoard boardState) {
         ArrayList<PentagoMove> moves = boardState.getAllLegalMoves();
         ArrayList<PentagoMove> nonDupeMoves = new ArrayList<>(moves.size());
@@ -285,6 +287,7 @@ public class MyTools {
             score = 0;
             boolean win = false;
             boolean otherWin = false;
+            boolean premptwin = false;
 
             for (int[][] wins : MyTools.template) {
                 int count = 0;
@@ -329,6 +332,10 @@ public class MyTools {
                     gameOver = true;
                     return this.score;
                 }
+//                if (count == 4 && this.turnPlayer == thing && piece == BLACK) {
+////                    it is also his turn to play compensate for that
+//                    premptwin = true;
+//                }
                 score += sign * MyTools.evalParams(count,piece);
             }
 
@@ -342,36 +349,50 @@ public class MyTools {
                 gameOver = true;
                 return score;
             }
+            if (premptwin) {
+                if (turnPlayer == piece) {
+                    score = Integer.MAX_VALUE;
+                }
+                else {
+                    score = Integer.MIN_VALUE;
+                }
+                gameOver = true;
+                return score;
+            }
             if (gameOver || turnNumber >= 18) {
                 score = 0; gameOver = true; return 0;
             }
             return score;
         }
 
-        //    a more expensive evaluation function that hopefully distinguishes more moves
+        /*
+            a more expensive evaluation function that hopefully distinguishes more moves
+            done for both sides
+         */
         public int deepEvaluate(int piece) {
             evaluate(piece);
-            if (gameOver|| piece == BLACK) {return score;}
-            int sum = 0;
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
-                    int x = i;
-                    int y = j;
-                    if (board[x][y] == piece) {
-                        sum += MyTools.linearWeights[i][j];
-                    } else if (board[x][y] == 1 - piece) {
-                        sum -= MyTools.linearWeights[i][j];
-                    }
-                    x = PentagoBoardState.BOARD_SIZE - x - 1;
-                    y = PentagoBoardState.BOARD_SIZE - y - 1;
-                    if (board[x][y] == piece) {
-                        sum += MyTools.linearWeights[i][j];
-                    } else if (board[x][y] == 1 - piece) {
-                        sum -= MyTools.linearWeights[i][j];
-                    }
-                }
-            }
-            return score+sum;
+            return score;
+//            if (gameOver) {return score;}
+//            int sum = 0;
+//            for (int i = 0; i < 3; i++) {
+//                for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
+//                    int x = i;
+//                    int y = j;
+//                    if (board[x][y] == piece) {
+//                        sum += MyTools.linearWeights[i][j];
+//                    } else if (board[x][y] == 1 - piece) {
+//                        sum -= MyTools.linearWeights[i][j];
+//                    }
+//                    x = PentagoBoardState.BOARD_SIZE - x - 1;
+//                    y = PentagoBoardState.BOARD_SIZE - y - 1;
+//                    if (board[x][y] == piece) {
+//                        sum += MyTools.linearWeights[i][j];
+//                    } else if (board[x][y] == 1 - piece) {
+//                        sum -= MyTools.linearWeights[i][j];
+//                    }
+//                }
+//            }
+//            return score+sum;
         }
 
         //    region Board Manipulation
