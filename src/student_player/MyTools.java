@@ -2,11 +2,9 @@ package student_player;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 
+import boardgame.Move;
 import pentago_twist.PentagoBoardState;
 import pentago_twist.PentagoCoord;
 import pentago_twist.PentagoMove;
@@ -61,8 +59,8 @@ public class MyTools {
             e.printStackTrace();
         }
         evalWeights = new int[2][];
-        evalWeights[FastBoard.WHITE] = new int[]{0,0,3,5,20,0};
-        evalWeights[FastBoard.BLACK] = new int[]{0,0,0,15,30,0};
+        evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,50,0};
+        evalWeights[FastBoard.BLACK] = new int[]{0,0,3,50,250,0};
 
         linearWeights = new int[3][];
         try {
@@ -108,39 +106,41 @@ public class MyTools {
 //        if (boardState.getTurnNumber() < 2) {
 //        }
 //        return boardState.getAllLegalMoves();
-        ArrayList<PentagoMove> list =  getLegalMovesSymmetry(boardState);
+        ArrayList<MoveScorePair> list =  getLegalMovesSymmetry(boardState, piece);
 //        test every transform and see which one improves our score
         if (isMax) piece = 1 - piece;
-        int[][] array = new int[4][2];
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 2; j++) {
-                boardState.twistQuadrant(i,j);
-                array[i][j] = boardState.evaluate(piece);
-                boardState.untwistQuadrant(i,j);
-            }
-        }
-//        we then sort moves by their transforms to hopefully get better moves first
-        Collections.sort(list, new moveComparator(array));
+//        we then sort moves by their depth 1 evaluations for better performance hopefully
+        Collections.sort(list,Collections.reverseOrder());
 //        Collections.shuffle(list);
-        return list;
+//        Take only the moves out
+        ArrayList<PentagoMove> list1 = new ArrayList<>(list.size());
+        for (MoveScorePair pair :
+                list) {
+            list1.add(pair.move);
+        }
+        return list1;
     }
 
-    public static class moveComparator implements Comparator<PentagoMove> {
-        int[][] saves;
-        public moveComparator(int[][] array) {
-            saves = array;
+
+    private static class MoveScorePair implements Comparable<MoveScorePair>{
+        public PentagoMove move;
+        public Integer score;
+        public MoveScorePair(PentagoMove move, Integer score) {
+            this.move = move;
+            this.score = score;
         }
-        public int compare(PentagoMove m1, PentagoMove m2) {
-            return ((Integer) saves[m1.getASwap()][m1.getBSwap()]).compareTo(
-                    saves[m2.getASwap()][m2.getBSwap()]);
+
+        @Override
+        public int compareTo(MoveScorePair o) {
+            return this.score.compareTo(o.score);
         }
     }
 
 //    get all moves up to symmetry
-    public static ArrayList<PentagoMove> getLegalMovesSymmetry(FastBoard boardState) {
+    public static ArrayList<MoveScorePair> getLegalMovesSymmetry(FastBoard boardState,int piece) {
         ArrayList<PentagoMove> moves = boardState.getAllLegalMoves();
-        ArrayList<PentagoMove> nonDupeMoves = new ArrayList<>(moves.size());
-        HashSet<Long> positions = new HashSet<>(600);
+        ArrayList<MoveScorePair> nonDupeMoves = new ArrayList<>(moves.size());
+        HashSet<Long> positions = new HashSet<>(moves.size());
         for (PentagoMove m : moves) {
 //            PentagoBoardState successor = (PentagoBoardState) boardState.clone();
 //            successor.processMove(m);
@@ -148,7 +148,7 @@ public class MyTools {
             boardState.doMove(m);
             if (positions.add(boardState.getTag())) {
 //				new position
-                nonDupeMoves.add(m);
+                nonDupeMoves.add(new MoveScorePair(m,boardState.evaluate(piece)));
 //                no point is searching for symmetries in position that are usually not symmetric
                 if (boardState.getTurnNumber() < 3) {
     //				rotate 180
@@ -332,10 +332,10 @@ public class MyTools {
                     gameOver = true;
                     return this.score;
                 }
-//                if (count == 4 && this.turnPlayer == thing && piece == BLACK) {
-////                    it is also his turn to play compensate for that
-//                    premptwin = true;
-//                }
+                if (count == 4 && this.turnPlayer == thing) {
+//                    it is also his turn to play compensate for that
+                    premptwin = true;
+                }
                 score += sign * MyTools.evalParams(count,piece);
             }
 

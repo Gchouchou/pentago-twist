@@ -3,6 +3,7 @@ package student_player;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 import boardgame.Move;
@@ -29,9 +30,17 @@ public class StudentPlayer extends PentagoPlayer {
     }
 
     static private final int MAXDEPTHBLACK = 2;
-    static private final int MAXDEPTHWHITE = 1;
+    static private final int MAXDEPTHWHITE = 2;
     private final static boolean MAX = true;
     private final static boolean MIN = false;
+
+    /**
+     *   The possible ratios for each weight:
+     */
+    private static final int[] ratios1 = new int[]{0,1};
+    private static final int[] ratios2 = new int[]{0,1,2,3};
+    private static final int[] ratios3 = new int[]{2,3,5,10};
+    private static final int[] ratios4 = new int[]{2,3,5,7,10};
 
     /**
      * This is the primary method that you need to implement. The ``boardState``
@@ -47,10 +56,11 @@ public class StudentPlayer extends PentagoPlayer {
         long startTime = System.nanoTime();
         PentagoMove move = alphaBetaWrapper(fastBoard);
         long stopTime = System.nanoTime();
-        if (stopTime- startTime <1000000) {
-//            go deeper when we finish it in less 0.01 seconds
-            return alphaBetaWrapper(fastBoard,MAXDEPTHWHITE+1,MAXDEPTHBLACK+1);
-        }
+//        System.out.println("" + ( stopTime -startTime ) / 10000000);
+//        if (stopTime- startTime <10000000) {
+////            go deeper when we finish it in less 0.01 seconds
+//            return alphaBetaWrapper(fastBoard,MAXDEPTHWHITE+1,MAXDEPTHBLACK+1);
+//        }
         return move;
     }
     public PentagoMove alphaBetaWrapper(FastBoard fastBoard) {
@@ -133,116 +143,161 @@ public class StudentPlayer extends PentagoPlayer {
         if (!MyTools.checkLoaded()) {
             MyTools.loadFile();
         }
-        int[] startRatios = new int[]{0,0,0,0};
-        MyTools.loadWeights(0,evaluationParameters.getWeightsFromRatios(startRatios));
-        MyTools.loadWeights(1,evaluationParameters.getWeightsFromRatios(startRatios));
-//        10 iterations of back and fourth.
-        for (int i = 0; i < 10; i++) {
-            int winner = simulGame(new FastBoard());
-            boolean finding = false;
-            for (int weight1 = 0; weight1 < 3; weight1++) {
-                for (int weight2 = 0; weight2 < 5 && !finding; weight2++) {
-                    for (int weight3 = 0; weight3 < 5 && !finding; weight3++) {
-                        for (int weight4 = 0; weight4 < 4 && !finding; weight4++) {
-                            MyTools.loadWeights(1-winner,
-                                    evaluationParameters.getWeightsFromRatios(weight1,weight2,weight3,weight4));
-                            int test = simulGame(new FastBoard());
-//                            if it is a different winner and it is not a tie
-                            if (test != winner && test != 3) {
-                                int[]update =
-                                        evaluationParameters.getWeightsFromRatios(weight1,weight2,weight3,weight4);
-                                System.out.println("Loser: " + winner);
-                                System.out.println("New weights: {"+ update[0] + "," + update[1] + ","
-                                + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
-                                finding= true;
-                            }
-                        }
+        ArrayList<int[]> allParams = new ArrayList<>(ratios1.length*ratios2.length*ratios3.length*ratios4.length);
+//        add all possible parameters to arraylist
+        for (int i = 0; i < ratios1.length; i++) {
+            for (int j = 0; j < ratios2.length; j++) {
+                for (int k = 0; k < ratios3.length; k++) {
+                    for (int l = 0; l < ratios4.length; l++) {
+                        allParams.add(getWeightsFromRatios(i,j,k,l));
                     }
                 }
             }
-            if (!finding) {
-                System.out.println("Could not beat");
-                break;
+        }
+//        shuffle to see if there is a better result
+        Collections.shuffle(allParams);
+        /*
+        int bStrat = 0;
+        int wStrat = 0;
+        while (true) {
+            MyTools.loadWeights(FastBoard.WHITE,allParams.get(wStrat));
+            MyTools.loadWeights(FastBoard.BLACK,allParams.get(bStrat));
+            int winner = simulGame(new FastBoard());
+            if (winner == FastBoard.BLACK) {
+//                if Black wins
+                boolean success = false;
+                while (wStrat < allParams.size() - 1) {
+                    wStrat++;
+                    MyTools.loadWeights(FastBoard.WHITE,allParams.get(wStrat));
+                    if (simulGame(new FastBoard()) == FastBoard.WHITE) {
+                        int[] update = allParams.get(wStrat);
+                        System.out.println("White wins!");
+                        System.out.println("New weights: {"+ update[0] + "," + update[1] + ","
+                        + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
+                        success = true;
+                        break;
+                    }
+                }
+                if (!success) {
+                    int[] update = allParams.get(bStrat);
+                    System.out.print("White could not win against ");
+                    System.out.println("weights: {"+ update[0] + "," + update[1] + ","
+                            + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
+                    break;
+                }
+            }
+            if (winner == FastBoard.WHITE) {
+//                if White wins
+                boolean success = false;
+                while (bStrat < allParams.size() - 1) {
+                    bStrat++;
+                    MyTools.loadWeights(FastBoard.BLACK,allParams.get(bStrat));
+                    if (simulGame(new FastBoard()) == FastBoard.BLACK) {
+                        int[] update = allParams.get(bStrat);
+                        System.out.println("Black wins!");
+                        System.out.println("New weights: {"+ update[0] + "," + update[1] + ","
+                                + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
+                        success = true;
+                        break;
+                    }
+                }
+                if (!success) {
+                    int[] update = allParams.get(wStrat);
+                    System.out.print("Black could not win against ");
+                    System.out.println("weights: {"+ update[0] + "," + update[1] + ","
+                            + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
+                    break;
+                }
             }
         }
+        */
+
+//        hard coded weights
+        MyTools.loadWeights(FastBoard.BLACK, new int[]{0,0,3,50,250,0});
+        int counter = 0;
+        for (int[] arrays :
+                allParams) {
+            MyTools.loadWeights(FastBoard.WHITE, arrays);
+            if (simulGame(new FastBoard()) == FastBoard.WHITE) {
+                counter++;
+                System.out.println("Beaten by {"+ arrays[0] + "," + arrays[1] + ","
+                        + arrays[2] + "," + arrays[3] + "," + arrays[4] + "," + arrays[5] + "}");
+            }
+        }
+        System.out.println("Number of counters:"+ counter);
     }
+
 
 //  class that generalize a evaluation parameters
-    static class evaluationParameters {
-//        int array of size 6 for each count
-       public int[] weights;
-//       the ratio between the weights size 5
-       private int[] ratios;
 
-       public static int[] getWeightsFromRatios(int[] ratios) {
-//           int[] newWeights = new int[6];
-//           newWeights[0] = 0;
-//           newWeights[1] = ratios[0];
-//           newWeights[2] = Integer.max(newWeights[1],1) * ratios[1];
-//           newWeights[3] = Integer.max(newWeights[2],10) * ratios[2];
-//           newWeights[4] = Integer.max(newWeights[3],10) * ratios[3];
-//           newWeights[5] = 0;
-           return getWeightsFromRatios(ratios[0],ratios[1], ratios[2], ratios[3]);
-       }
+   public static int[] getWeightsFromRatios(int[] weights) {
+                                                      //           int[] newWeights = new int[6];
+                                                      //           newWeights[0] = 0;
+                                                      //           newWeights[1] = ratios[0];
+                                                      //           newWeights[2] = Integer.max(newWeights[1],1) * ratios[1];
+                                                      //           newWeights[3] = Integer.max(newWeights[2],10) * ratios[2];
+                                                      //           newWeights[4] = Integer.max(newWeights[3],10) * ratios[3];
+                                                      //           newWeights[5] = 0;
+                                                      return getWeightsFromRatios(weights[0],weights[1], weights[2], weights[3]);
+                                                      }
 
-       public static int[] getWeightsFromRatios(int weight1,int weight2,int weight3,int weight4) {
-           int ratio1 = weight1;
-           int ratio2 = weight2;
-           int ratio3;
-           switch (weight3) {
-               case 0:
-                   ratio3 = 1;
-                   break;
-               case 1:
-                   ratio3 = 3;
-                   break;
-               case 2:
-                   ratio3 = 5;
-                   break;
-               default:
-                   ratio3 = 10;
-                   break;
-           }
-           int ratio4;
-           switch (weight4) {
-               case 0:
-                   ratio4 = 2;
-                   break;
-               case 1:
-                   ratio4 = 3;
-                   break;
-               case 2:
-                   ratio4 = 5;
-                   break;
-               default:
-                   ratio4 = 10;
-                   break;
-           }
-           int[] newWeights = new int[6];
-           newWeights[0] = 0;
-           newWeights[1] = ratio1;
-           newWeights[2] = Integer.max(newWeights[1],1) * ratio2;
-           newWeights[3] = Integer.max(newWeights[2],5) * ratio3;
-           newWeights[4] = Integer.max(newWeights[3],10) * ratio4;
-           newWeights[5] = 0;
-           return newWeights;
-       }
+   public static int[] getWeightsFromRatios(int weight1,int weight2,int weight3,int weight4) {
+                                                                                         //           int ratio1 = weight1;
+                                                                                         //           int ratio2 = weight2;
+                                                                                         //           int ratio3;
+                                                                                         //           switch (weight3) {
+                                                                                         //               case 0:
+                                                                                         //                   ratio3 = 1;
+                                                                                         //                   break;
+                                                                                         //               case 1:
+                                                                                         //                   ratio3 = 2;
+                                                                                         //                   break;
+                                                                                         //               case 2:
+                                                                                         //                   ratio3 = 3;
+                                                                                         //                   break;
+                                                                                         //               case 3:
+                                                                                         //                   ratio3 = 4;
+                                                                                         //                   break;
+                                                                                         //               default:
+                                                                                         //                   ratio3 = 10;
+                                                                                         //                   break;
+                                                                                         //           }
+                                                                                         //           int ratio4;
+                                                                                         //           switch (weight4) {
+                                                                                         //               case 0:
+                                                                                         //                   ratio4 = 2;
+                                                                                         //                   break;
+                                                                                         //               case 1:
+                                                                                         //                   ratio4 = 3;
+                                                                                         //                   break;
+                                                                                         //               case 2:
+                                                                                         //                   ratio4 = 5;
+                                                                                         //                   break;
+                                                                                         //               default:
+                                                                                         //                   ratio4 = 10;
+                                                                                         //                   break;
+                                                                                         //           }
+                                                                                         int ratio1 = ratios1[weight1];
+                                                                                         int ratio2 = ratios2[weight2];
+                                                                                         int ratio3 = ratios3[weight3];
+                                                                                         int ratio4 = ratios4[weight4];
+                                                                                         int[] newWeights = new int[6];
+                                                                                         newWeights[0] = 0;
+                                                                                         newWeights[1] = ratio1;
+                                                                                         newWeights[2] = Integer.max(newWeights[1],1) * ratio2;
+                                                                                         newWeights[3] = Integer.max(newWeights[2],5) * ratio3;
+                                                                                         newWeights[4] = Integer.max(newWeights[3],10) * ratio4;
+                                                                                         newWeights[5] = 0;
+                                                                                         return newWeights;
+                                                                                         }
 
-/*
-    The possible ratios for each weight:
-    1: 0,1,2
-    2: 0,1,2,3
-    3: 1,5,10,20
-    4: 5,10,15,20,30,50,
- */
-       public static int[] copy(int[] base) {
-           int[] copy = new int[base.length];
-           for (int i = 0; i < base.length; i++) {
-               copy[i] = base[i];
-           }
-           return copy;
+   public static int[] copy(int[] base) {
+       int[] copy = new int[base.length];
+       for (int i = 0; i < base.length; i++) {
+           copy[i] = base[i];
        }
-    }
+       return copy;
+   }
 
     public static void openingMoveSimul() {
         Random rand = new Random();
