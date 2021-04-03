@@ -1,14 +1,14 @@
 package student_player;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.util.*;
-
 import pentago_twist.PentagoBoardState;
 import pentago_twist.PentagoCoord;
 import pentago_twist.PentagoMove;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 
 public class MyTools {
 
@@ -25,6 +25,7 @@ public class MyTools {
     public static ArrayList<int[][]> template;
     public static ArrayList<int[][]> template2;
     public static int[][] linearWeights;
+
     //  method to read string and create the set of 5 coordinates.
     private static int[][] stringToComb(String s) {
         int[][] a = new int[5][2];
@@ -54,8 +55,8 @@ public class MyTools {
         LoadStrings(SIMPLETXT, template);
         LoadStrings(COMPLEXTXT, template2);
         evalWeights = new int[2][];
-        evalWeights[FastBoard.WHITE] = new int[]{0,0,0,50,500,0};
-        evalWeights[FastBoard.BLACK] = new int[]{0,0,3,50,250,0};
+        evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,100,0};
+        evalWeights[FastBoard.BLACK] = new int[]{0, 1, 0, 10, 30, 0};
 
         linearWeights = new int[3][];
         try {
@@ -99,13 +100,13 @@ public class MyTools {
         return array;
     }
 
-//    change evaluation function weights for a particular color
+    //    change evaluation function weights for a particular color
     public static void loadWeights(int piece, int[] arr) {
         evalWeights[piece] = arr;
     }
 // endregion
 
-//    evaluation function based on how many rocks we have in a 5 block win
+    //    evaluation function based on how many rocks we have in a 5 block win
     public static int evalParams(int count, int piece) {
         return evalWeights[piece][count];
     }
@@ -116,7 +117,7 @@ public class MyTools {
 //        if (boardState.getTurnNumber() < 2) {
 //        }
 //        return boardState.getAllLegalMoves();
-        ArrayList<MoveScorePair> list =  getLegalMovesSymmetry(boardState, piece);
+        ArrayList<MoveScorePair> list = getLegalMovesSymmetry(boardState, piece);
 //        test every transform and see which one improves our score
 //        we then sort moves by their depth 1 evaluations for better performance hopefully
         Collections.sort(list);
@@ -135,9 +136,10 @@ public class MyTools {
     }
 
 
-    private static class MoveScorePair implements Comparable<MoveScorePair>{
+    private static class MoveScorePair implements Comparable<MoveScorePair> {
         public PentagoMove move;
         public Integer score;
+
         public MoveScorePair(PentagoMove move, Integer score) {
             this.move = move;
             this.score = score;
@@ -149,8 +151,8 @@ public class MyTools {
         }
     }
 
-//    get all moves up to symmetry
-    public static ArrayList<MoveScorePair> getLegalMovesSymmetry(FastBoard boardState,int piece) {
+    //    get all moves up to symmetry
+    public static ArrayList<MoveScorePair> getLegalMovesSymmetry(FastBoard boardState, int piece) {
         ArrayList<PentagoMove> moves = boardState.getAllLegalMoves();
         ArrayList<MoveScorePair> nonDupeMoves = new ArrayList<>(moves.size());
         HashSet<Long> positions = new HashSet<>(moves.size());
@@ -161,10 +163,10 @@ public class MyTools {
             boardState.doMove(m);
             if (positions.add(boardState.getTag())) {
 //				new position
-                nonDupeMoves.add(new MoveScorePair(m,boardState.evaluate(piece)));
+                nonDupeMoves.add(new MoveScorePair(m, boardState.evaluate(piece)));
 //                no point is searching for symmetries in position that are usually not symmetric
                 if (boardState.getTurnNumber() < 3) {
-    //				rotate 180
+                    //				rotate 180
                     boardState.rotate180();
                     positions.add(boardState.getTag());
                     boardState.rotate180();
@@ -187,7 +189,7 @@ public class MyTools {
         }
     }
 
-//	Getting Unique Tag of Matrix
+    //	Getting Unique Tag of Matrix
     public static long boardTag(int[][] mat) {
         long index = 0;
         for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
@@ -349,7 +351,7 @@ public class MyTools {
 //                    it is also his turn to play compensate for that
                     premptwin = true;
                 }
-                score += sign * MyTools.evalParams(count,piece);
+                score += sign * MyTools.evalParams(count, piece);
             }
 
             if (win) {
@@ -365,27 +367,30 @@ public class MyTools {
             if (premptwin) {
                 if (turnPlayer == piece) {
                     score = Integer.MAX_VALUE;
-                }
-                else {
+                } else {
                     score = Integer.MIN_VALUE;
                 }
                 gameOver = true;
                 return score;
             }
             if (gameOver || turnNumber >= 18) {
-                score = 0; gameOver = true; return 0;
+                score = 0;
+                gameOver = true;
+                return 0;
             }
             return score;
         }
 
         /**
-            a more expensive evaluation function that hopefully distinguishes more moves
-            done for both sides
+         * a more expensive evaluation function that hopefully distinguishes more moves
+         * done for both sides
          */
         public int deepEvaluate(int piece) {
             evaluate(piece);
 //            return score;
-            if (gameOver) {return score;}
+            if (gameOver) {
+                return score;
+            }
             int sum = 0;
 //            for (int i = 0; i < 3; i++) {
 //                for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
@@ -438,12 +443,11 @@ public class MyTools {
                 } else if (thing != EMPTY) {
                     sign = -1;
                 }
-                if ((count == 4 || count == 5) && thing == turnPlayer ) {
+                if ((count == 4 || count == 5) && thing == turnPlayer) {
 //                    he can win in one move
                     premptwin = true;
                     break;
-                }
-                else if (count == 5 && thing == 1-turnPlayer ){
+                } else if (count == 5 && thing == 1 - turnPlayer) {
 //                  we are actually not winning (since he could block so we downgrade to count = 4
                     count = 4;
                 }
@@ -457,14 +461,13 @@ public class MyTools {
 ////                    it is also his turn to play compensate for that
 //                    premptwin = true;
 //                }
-                sum += sign * MyTools.evalParams(count,piece);
+                sum += sign * MyTools.evalParams(count, piece);
             }
 
             if (premptwin) {
                 if (turnPlayer == piece) {
                     score = Integer.MAX_VALUE;
-                }
-                else {
+                } else {
                     score = Integer.MIN_VALUE;
                 }
                 gameOver = true;
