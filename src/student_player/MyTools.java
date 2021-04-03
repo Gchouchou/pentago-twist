@@ -1,10 +1,11 @@
 package student_player;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.*;
 
-import boardgame.Move;
 import pentago_twist.PentagoBoardState;
 import pentago_twist.PentagoCoord;
 import pentago_twist.PentagoMove;
@@ -15,11 +16,14 @@ public class MyTools {
     private static final String SIMPLETXT = "SIMPLE.txt";
     private static final Integer FILELENGTH = 32;
     private static int[][] evalWeights;
-    private static final String LINEARCSV = "Linear.csv";
+    private static final String LINEARCSV = "LINEAR.csv";
+    private static final String COMPLEXTXT = "COMPLEX.txt";
+    private static final Integer COMPLEXLENGTH = 96;
 
     private static boolean loaded = false;
 
     public static ArrayList<int[][]> template;
+    public static ArrayList<int[][]> template2;
     public static int[][] linearWeights;
     //  method to read string and create the set of 5 coordinates.
     private static int[][] stringToComb(String s) {
@@ -45,21 +49,12 @@ public class MyTools {
 
     public static void loadFile() {
         template = new ArrayList<>(FILELENGTH);
+        template2 = new ArrayList<>(COMPLEXLENGTH);
         loaded = true;
-        try {
-            FileReader fr = new FileReader("data/" + SIMPLETXT);
-            BufferedReader br = new BufferedReader(fr);
-            String str;
-            while ((str = br.readLine()) != null) {
-                template.add(stringToComb(str));
-            }
-            br.close();
-            fr.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        LoadStrings(SIMPLETXT, template);
+        LoadStrings(COMPLEXTXT, template2);
         evalWeights = new int[2][];
-        evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,50,0};
+        evalWeights[FastBoard.WHITE] = new int[]{0,0,0,50,500,0};
         evalWeights[FastBoard.BLACK] = new int[]{0,0,3,50,250,0};
 
         linearWeights = new int[3][];
@@ -78,7 +73,22 @@ public class MyTools {
         }
     }
 
-//    take csv and convert to array
+    private static void LoadStrings(String complextxt, ArrayList<int[][]> template2) {
+        try {
+            FileReader fr = new FileReader("data/" + complextxt);
+            BufferedReader br = new BufferedReader(fr);
+            String str;
+            while ((str = br.readLine()) != null) {
+                template2.add(stringToComb(str));
+            }
+            br.close();
+            fr.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //    take csv and convert to array
     private static int[] strToArray(String string) {
         String[] arr = string.split(",");
         assert (arr.length == 6);
@@ -108,9 +118,12 @@ public class MyTools {
 //        return boardState.getAllLegalMoves();
         ArrayList<MoveScorePair> list =  getLegalMovesSymmetry(boardState, piece);
 //        test every transform and see which one improves our score
-        if (isMax) piece = 1 - piece;
 //        we then sort moves by their depth 1 evaluations for better performance hopefully
-        Collections.sort(list,Collections.reverseOrder());
+        Collections.sort(list);
+        if (isMax) {
+            Collections.reverse(list);
+        }
+
 //        Collections.shuffle(list);
 //        Take only the moves out
         ArrayList<PentagoMove> list1 = new ArrayList<>(list.size());
@@ -365,15 +378,15 @@ public class MyTools {
             return score;
         }
 
-        /*
+        /**
             a more expensive evaluation function that hopefully distinguishes more moves
             done for both sides
          */
         public int deepEvaluate(int piece) {
             evaluate(piece);
-            return score;
-//            if (gameOver) {return score;}
-//            int sum = 0;
+//            return score;
+            if (gameOver) {return score;}
+            int sum = 0;
 //            for (int i = 0; i < 3; i++) {
 //                for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
 //                    int x = i;
@@ -392,7 +405,73 @@ public class MyTools {
 //                    }
 //                }
 //            }
-//            return score+sum;
+            boolean premptwin = false;
+
+            for (int[][] wins : MyTools.template2) {
+                int count = 0;
+                int thing = EMPTY;
+                for (int i = 0; i < 5; i++) {
+//				get what piece is at the location
+                    int p = board[wins[i][0]][wins[i][1]];
+//                skip when we see nothing
+                    if (p == EMPTY) {
+                        continue;
+                    }
+//                update if it is the first piece we saw
+                    if (thing == EMPTY) {
+                        thing = p;
+                        count++;
+                    } else if (p != thing) {
+//                    different colored piece we stop counting
+                        count = 0;
+                        break;
+                    } else {
+//                    same colored piece we continue
+                        count++;
+                    }
+                }
+//			scoring algo
+//            check what color were the pieces
+                int sign = 0;
+                if (thing == piece) {
+                    sign = 1;
+                } else if (thing != EMPTY) {
+                    sign = -1;
+                }
+                if ((count == 4 || count == 5) && thing == turnPlayer ) {
+//                    he can win in one move
+                    premptwin = true;
+                    break;
+                }
+                else if (count == 5 && thing == 1-turnPlayer ){
+//                  we are actually not winning (since he could block so we downgrade to count = 4
+                    count = 4;
+                }
+//				it's a draw just break
+//                if (win && otherWin) {
+//                    this.score = 0;
+//                    gameOver = true;
+//                    return this.score;
+//                }
+//                if (count == 4 && this.turnPlayer == thing) {
+////                    it is also his turn to play compensate for that
+//                    premptwin = true;
+//                }
+                sum += sign * MyTools.evalParams(count,piece);
+            }
+
+            if (premptwin) {
+                if (turnPlayer == piece) {
+                    score = Integer.MAX_VALUE;
+                }
+                else {
+                    score = Integer.MIN_VALUE;
+                }
+                gameOver = true;
+                return score;
+            }
+            score += sum;
+            return score;
         }
 
         //    region Board Manipulation

@@ -35,12 +35,12 @@ public class StudentPlayer extends PentagoPlayer {
     private final static boolean MIN = false;
 
     /**
-     *   The possible ratios for each weight:
+     * The possible ratios for each weight:
      */
-    private static final int[] ratios1 = new int[]{0,1};
-    private static final int[] ratios2 = new int[]{0,1,2,3};
-    private static final int[] ratios3 = new int[]{2,3,5,10};
-    private static final int[] ratios4 = new int[]{2,3,5,7,10};
+    private static final int[] ratios1 = new int[]{0, 1};
+    private static final int[] ratios2 = new int[]{0, 1, 2, 3};
+    private static final int[] ratios3 = new int[]{2, 3, 5, 10};
+    private static final int[] ratios4 = new int[]{2, 3, 5, 7, 10};
 
     /**
      * This is the primary method that you need to implement. The ``boardState``
@@ -56,19 +56,20 @@ public class StudentPlayer extends PentagoPlayer {
         long startTime = System.nanoTime();
         PentagoMove move = alphaBetaWrapper(fastBoard);
         long stopTime = System.nanoTime();
-//        System.out.println("" + ( stopTime -startTime ) / 10000000);
+        System.out.println("" + ( stopTime -startTime ) / 10000000);
 //        if (stopTime- startTime <10000000) {
 ////            go deeper when we finish it in less 0.01 seconds
 //            return alphaBetaWrapper(fastBoard,MAXDEPTHWHITE+1,MAXDEPTHBLACK+1);
 //        }
         return move;
     }
+
     public PentagoMove alphaBetaWrapper(FastBoard fastBoard) {
-        return alphaBetaWrapper(fastBoard,MAXDEPTHWHITE,MAXDEPTHBLACK);
+        return alphaBetaWrapper(fastBoard, MAXDEPTHWHITE, MAXDEPTHBLACK);
     }
 
-//    AlphaBeta algorithm wrapper
-    public PentagoMove alphaBetaWrapper(FastBoard fastBoard,int maxDepthWhite, int maxDepthBlack) {
+    //    AlphaBeta algorithm wrapper
+    public PentagoMove alphaBetaWrapper(FastBoard fastBoard, int maxDepthWhite, int maxDepthBlack) {
         int piece = fastBoard.getTurnPlayer();
         ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard, piece, MAX);
         PentagoMove bestMove = legalMoves.get(0);
@@ -143,45 +144,59 @@ public class StudentPlayer extends PentagoPlayer {
         if (!MyTools.checkLoaded()) {
             MyTools.loadFile();
         }
-        ArrayList<int[]> allParams = new ArrayList<>(ratios1.length*ratios2.length*ratios3.length*ratios4.length);
+        ArrayList<int[]> allParams = new ArrayList<>(ratios1.length * ratios2.length * ratios3.length * ratios4.length);
 //        add all possible parameters to arraylist
         for (int i = 0; i < ratios1.length; i++) {
             for (int j = 0; j < ratios2.length; j++) {
                 for (int k = 0; k < ratios3.length; k++) {
                     for (int l = 0; l < ratios4.length; l++) {
-                        allParams.add(getWeightsFromRatios(i,j,k,l));
+                        allParams.add(getWeightsFromRatios(i, j, k, l));
                     }
                 }
             }
         }
 //        shuffle to see if there is a better result
         Collections.shuffle(allParams);
-        /*
+        runSimulations(allParams);
+//        testWeights(allParams,FastBoard.WHITE, new int[]{0,0,0,50,500,0});
+    }
+
+    public static void runSimulations(ArrayList<int[]> allParams) {
+        Random rand = new Random();
         int bStrat = 0;
         int wStrat = 0;
         while (true) {
-            MyTools.loadWeights(FastBoard.WHITE,allParams.get(wStrat));
-            MyTools.loadWeights(FastBoard.BLACK,allParams.get(bStrat));
+            MyTools.loadWeights(FastBoard.WHITE, allParams.get(wStrat));
+            MyTools.loadWeights(FastBoard.BLACK, allParams.get(bStrat));
             int winner = simulGame(new FastBoard());
+            if (winner == FastBoard.EMPTY) {
+//                tied game just randomly choose a winner
+                winner = rand.nextInt(2);
+            }
             if (winner == FastBoard.BLACK) {
 //                if Black wins
                 boolean success = false;
+                int wins = 0;
                 while (wStrat < allParams.size() - 1) {
                     wStrat++;
-                    MyTools.loadWeights(FastBoard.WHITE,allParams.get(wStrat));
+                    MyTools.loadWeights(FastBoard.WHITE, allParams.get(wStrat));
                     if (simulGame(new FastBoard()) == FastBoard.WHITE) {
                         int[] update = allParams.get(wStrat);
-                        System.out.println("White wins!");
-                        System.out.println("New weights: {"+ update[0] + "," + update[1] + ","
-                        + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
+                        System.out.println("\nWhite wins; Black won "+ wins +" games.");
+                        System.out.println("New weights: {" + update[0] + "," + update[1] + ","
+                                + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
                         success = true;
                         break;
+                    }
+                    else {
+                        wins++;
+                        System.out.print("#");
                     }
                 }
                 if (!success) {
                     int[] update = allParams.get(bStrat);
                     System.out.print("White could not win against ");
-                    System.out.println("weights: {"+ update[0] + "," + update[1] + ","
+                    System.out.println("weights: {" + update[0] + "," + update[1] + ","
                             + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
                     break;
                 }
@@ -189,36 +204,43 @@ public class StudentPlayer extends PentagoPlayer {
             if (winner == FastBoard.WHITE) {
 //                if White wins
                 boolean success = false;
+                int wins = 0;
                 while (bStrat < allParams.size() - 1) {
                     bStrat++;
-                    MyTools.loadWeights(FastBoard.BLACK,allParams.get(bStrat));
+                    MyTools.loadWeights(FastBoard.BLACK, allParams.get(bStrat));
                     if (simulGame(new FastBoard()) == FastBoard.BLACK) {
                         int[] update = allParams.get(bStrat);
-                        System.out.println("Black wins!");
-                        System.out.println("New weights: {"+ update[0] + "," + update[1] + ","
+                        System.out.println("\nBlack wins; White won "+ wins +" games.");
+                        System.out.println("New weights: {" + update[0] + "," + update[1] + ","
                                 + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
                         success = true;
                         break;
                     }
+                    else {
+                        wins++;
+                        System.out.print("#");
+                    }
                 }
                 if (!success) {
                     int[] update = allParams.get(wStrat);
-                    System.out.print("Black could not win against ");
-                    System.out.println("weights: {"+ update[0] + "," + update[1] + ","
+                    System.out.print("\nBlack could not win against ");
+                    System.out.println("weights: {" + update[0] + "," + update[1] + ","
                             + update[2] + "," + update[3] + "," + update[4] + "," + update[5] + "}");
                     break;
                 }
             }
         }
-        */
+    }
+
+    public static void testWeights(ArrayList<int[]> allParams,int piece,int[] params) {
 
 //        hard coded weights
-        MyTools.loadWeights(FastBoard.BLACK, new int[]{0,0,3,50,250,0});
+        MyTools.loadWeights(piece,params);
         int counter = 0;
         for (int[] arrays :
                 allParams) {
-            MyTools.loadWeights(FastBoard.WHITE, arrays);
-            if (simulGame(new FastBoard()) == FastBoard.WHITE) {
+            MyTools.loadWeights(1-piece, arrays);
+            if (simulGame(new FastBoard()) == 1-piece) {
                 counter++;
                 System.out.println("Beaten by {"+ arrays[0] + "," + arrays[1] + ","
                         + arrays[2] + "," + arrays[3] + "," + arrays[4] + "," + arrays[5] + "}");
@@ -227,8 +249,6 @@ public class StudentPlayer extends PentagoPlayer {
         System.out.println("Number of counters:"+ counter);
     }
 
-
-//  class that generalize a evaluation parameters
 
    public static int[] getWeightsFromRatios(int[] weights) {
                                                       //           int[] newWeights = new int[6];
