@@ -56,7 +56,7 @@ public class MyTools {
         LoadStrings(COMPLEXTXT, template2);
         evalWeights = new int[2][];
         evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,100,0};
-        evalWeights[FastBoard.BLACK] = new int[]{0, 1, 0, 10, 30, 0};
+        evalWeights[FastBoard.BLACK] = new int[]{0,0,1,15,150,0};
 
         linearWeights = new int[3][];
         try {
@@ -237,7 +237,7 @@ public class MyTools {
 
         public static final int WHITE = 0;
         public static final int BLACK = 1;
-        public static final int EMPTY = 3;
+        public static final int EMPTY = 2;
 
         //    copy a PentagoBoardState
         public FastBoard(PentagoBoardState boardState) {

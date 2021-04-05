@@ -5,3 +5,5 @@ bin/*
 logs/
 .idea/
 *.iml
+data/EVAL6.TXT
+data/BOARDS6.TXT
