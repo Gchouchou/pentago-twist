@@ -104,8 +104,8 @@ public class StudentPlayer extends PentagoPlayer {
             return position.deepEvaluate(piece);
 //            return position.evaluate(piece);
         }
-        ArrayList<PentagoMove> moves = position.getAllLegalMoves();
-//        ArrayList<PentagoMove> moves = MyTools.getLegalMoves(position, piece, isMAX);
+//        ArrayList<PentagoMove> moves = position.getAllLegalMoves();
+        ArrayList<PentagoMove> moves = MyTools.getLegalMoves(position, piece, isMAX);
         for (PentagoMove m : moves) {
 //            PentagoBoardState successor = (PentagoBoardState) position.clone();
 //            successor.processMove(m);
@@ -617,6 +617,128 @@ public class StudentPlayer extends PentagoPlayer {
 //        we now write everything to a file and hope it matches with our computations
         try {
             FileWriter fw = new FileWriter("data/EVAL5.TXT", true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            for (long tag :
+                    scoreMap.keySet()) {
+                bw.write("" + identifierMap.get(tag) + scoreMap.get(tag)+"\n");
+            }
+            bw.close();
+            fw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void retrograde2() {
+//        we first generate a Hashmap of every possible state after 5 moves to a string
+//        we also make a hashmap for the scores
+//        we can also make a hashset for the possible states up to symmetry to save time and space
+        HashMap<Long, String> identifierMap = new HashMap<>(500000);
+        HashMap<Long, Integer> scoreMap = new HashMap<>(500000);
+        HashSet<Long> symmetrySet = new HashSet<>(500000);
+        try {
+            long counter = 0;
+            FileReader fr = new FileReader("data/EVAL5.TXT");
+            BufferedReader br = new BufferedReader(fr);
+            String line;
+            int[] coordinates = new int[5];
+            int score;
+            FastBoard board = new FastBoard();
+//            board.turnPlayer = FastBoard.BLACK;
+            long tag;
+            int wcounter;
+            int bcounter;
+            int[] newCoordinates = new int[4];
+            while ((line = br.readLine()) != null) {
+                System.out.println(counter);
+                counter++;
+//                parse the String
+                String[] sarray = line.split(",");
+                score = Integer.parseInt(sarray[5]);
+                for (int i = 0; i < 5; i++) {
+                    coordinates[i] = Integer.parseInt(sarray[i]);
+                }
+//                the first 3 coordinates are white pieces and the second 3 are the black pieces
+//                place 6 pieces on the board
+                board.board[coordinates[0] / 6][coordinates[0] % 6] = FastBoard.WHITE;
+                board.board[coordinates[1] / 6][coordinates[1] % 6] = FastBoard.WHITE;
+                board.board[coordinates[2] / 6][coordinates[2] % 6] = FastBoard.WHITE;
+                board.board[coordinates[3] / 6][coordinates[3] % 6] = FastBoard.BLACK;
+                board.board[coordinates[4] / 6][coordinates[4] % 6] = FastBoard.BLACK;
+//                board.board[coordinates[5] / 6][coordinates[5] % 6] = FastBoard.BLACK;
+//                get all 8 possible transformations of the board
+                for (int i = 0; i < 8; i++) {
+                    board.untwistQuadrant(i % 4, i / 4);
+//                    we then search for a black piece to remove
+                    for (int j = 0; j < 36; j++) {
+                        if (board.board[j / 6][j % 6] == FastBoard.WHITE) {
+//                            we found a black piece now we remove it, check if we already had this position recorded
+//                            if not create the new position, if it was already created we update the minimum
+                            board.board[j / 6][j % 6] = FastBoard.EMPTY;
+                            tag = board.getTag();
+                            if (symmetrySet.add(tag)) {
+//                                it is a new position
+//                                record the positions of the pieces
+                                wcounter = 0;
+                                bcounter = 2;
+                                for (int k = 0; k < 36; k++) {
+                                    if (board.board[k / 6][k % 6] == FastBoard.WHITE) {
+                                        newCoordinates[wcounter] = k;
+                                        wcounter++;
+                                    }
+                                    if (board.board[k / 6][k % 6] == FastBoard.BLACK) {
+                                        newCoordinates[bcounter] = k;
+                                        bcounter++;
+                                    }
+                                }
+//                                we now associate the identifier string to the tag (first three are white positions)
+                                identifierMap.put(tag,"" + newCoordinates[0]+","+ newCoordinates[1]+","+
+                                        newCoordinates[2]+","+ newCoordinates[3]+",");
+//                                create a score
+                                scoreMap.put(tag,score);
+//                                add its rotation to the set of explored tags
+                                board.rotate180();
+                                symmetrySet.add(board.getTag());
+                                board.rotate180();
+                            }
+                            else {
+//                                the position is already in database, we simply update the score
+//                                since there are rotations we must make sure we do not add another tag
+                                if (!scoreMap.containsKey(tag)) {
+//                                    rotate the board and get tag of rotation
+                                    board.rotate180();
+                                    tag = board.getTag();
+//                                    rotate it back
+                                    board.rotate180();
+                                }
+                                if (scoreMap.get(tag) < score) {
+//                                        update the score
+                                    scoreMap.put(tag,score);
+                                }
+                            }
+//                            place the board back
+                            board.board[j / 6][j % 6] = FastBoard.WHITE;
+                        }
+                    }
+//                    twist the board back
+                    board.twistQuadrant(i % 4, i / 4);
+                }
+//                wipe the board clean for the next initial position of 6 stones
+                for (int i :
+                        coordinates) {
+                    board.board[i / 6][i % 6] = FastBoard.EMPTY;
+                }
+            }
+            br.close();
+            fr.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("Number of positions:" + symmetrySet.size());
+//        we now write everything to a file and hope it matches with our computations
+        try {
+            FileWriter fw = new FileWriter("data/EVAL4.TXT", true);
             BufferedWriter bw = new BufferedWriter(fw);
             for (long tag :
                     scoreMap.keySet()) {
