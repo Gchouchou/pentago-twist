@@ -142,6 +142,7 @@ public class StudentPlayer extends PentagoPlayer {
 //        runSimulations();
 //        testWeights(FastBoard.WHITE, new int[]{0,1,2,10,100,0});
 //        testWeights(FastBoard.BLACK, new int[]{0,0,3,50,250,0});
+        retrograde();
     }
 
     /**
@@ -514,6 +515,7 @@ public class StudentPlayer extends PentagoPlayer {
         HashMap<Long, Integer> scoreMap = new HashMap<>(500000);
         HashSet<Long> symmetrySet = new HashSet<>(500000);
         try {
+            long counter = 0;
             FileReader fr = new FileReader("data/EVAL6.TXT");
             BufferedReader br = new BufferedReader(fr);
             String line;
@@ -526,6 +528,8 @@ public class StudentPlayer extends PentagoPlayer {
             int bcounter;
             int[] newCoordinates = new int[5];
             while ((line = br.readLine()) != null) {
+                System.out.println(counter);
+                counter++;
 //                parse the String
                 String[] sarray = line.split(",");
                 score = Integer.parseInt(sarray[6]);
@@ -560,7 +564,7 @@ public class StudentPlayer extends PentagoPlayer {
                                         newCoordinates[wcounter] = k;
                                         wcounter++;
                                     }
-                                    else if (board.board[k / 6][k % 6] == FastBoard.BLACK) {
+                                    if (board.board[k / 6][k % 6] == FastBoard.BLACK) {
                                         newCoordinates[bcounter] = k;
                                         bcounter++;
                                     }
@@ -570,12 +574,25 @@ public class StudentPlayer extends PentagoPlayer {
                                         newCoordinates[2]+","+ newCoordinates[3]+","+ newCoordinates[4]+",");
 //                                create a score
                                 scoreMap.put(tag,score);
-                                board.rotate180();
 //                                add its rotation to the set of explored tags
+                                board.rotate180();
                                 symmetrySet.add(board.getTag());
+                                board.rotate180();
                             }
                             else {
-
+//                                the position is already in database, we simply update the score
+//                                since there are rotations we must make sure we do not add another tag
+                                if (!scoreMap.containsKey(tag)) {
+//                                    rotate the board and get tag of rotation
+                                    board.rotate180();
+                                    tag = board.getTag();
+//                                    rotate it back
+                                    board.rotate180();
+                                }
+                                if (scoreMap.get(tag) > score) {
+//                                        update the score
+                                    scoreMap.put(tag,score);
+                                }
                             }
 //                            place the board back
                             board.board[j / 6][j % 6] = FastBoard.BLACK;
@@ -584,10 +601,30 @@ public class StudentPlayer extends PentagoPlayer {
 //                    twist the board back
                     board.twistQuadrant(i % 4, i / 4);
                 }
+//                wipe the board clean for the next initial position of 6 stones
+                for (int i :
+                        coordinates) {
+                    board.board[i / 6][i % 6] = FastBoard.EMPTY;
+                }
             }
-
+            br.close();
+            fr.close();
         }
         catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("Number of positions:" + symmetrySet.size());
+//        we now write everything to a file and hope it matches with our computations
+        try {
+            FileWriter fw = new FileWriter("data/EVAL5.TXT", true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            for (long tag :
+                    scoreMap.keySet()) {
+                bw.write("" + identifierMap.get(tag) + scoreMap.get(tag)+"\n");
+            }
+            bw.close();
+            fw.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
