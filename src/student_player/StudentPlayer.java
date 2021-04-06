@@ -24,8 +24,8 @@ public class StudentPlayer extends PentagoPlayer {
         super("260871056");
     }
 
-    static private final int MAXDEPTHBLACK = 2;
-    static private final int MAXDEPTHWHITE = 2;
+    static private final int MAXDEPTHBLACK = 3;
+    static private final int MAXDEPTHWHITE = 3;
     private final static boolean MAX = true;
     private final static boolean MIN = false;
 
@@ -48,7 +48,7 @@ public class StudentPlayer extends PentagoPlayer {
         }
 
         FastBoard fastBoard = new FastBoard(boardState);
-//        if (fastBoard.turnPlayer == FastBoard.BLACK && fastBoard.turnNumber < 2) {
+//        if (( fastBoard.turnNumber > 0 || fastBoard.turnPlayer != 0 ) && fastBoard.turnNumber < 2) {
 //            int maxDepth = 4 - 2*fastBoard.turnNumber - fastBoard.turnPlayer;
 //            return alphaBetaWrapper(fastBoard,maxDepth,maxDepth);
 //        }
@@ -78,9 +78,9 @@ public class StudentPlayer extends PentagoPlayer {
         for (PentagoMove move : legalMoves) {
             fastBoard.doMove(move);
             if (piece == FastBoard.WHITE) {
-                test = alphaBeta(fastBoard, maxDepthWhite, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, maxDepthWhite-1, alpha, beta, piece, MIN);
             } else {
-                test = alphaBeta(fastBoard, maxDepthBlack, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, maxDepthBlack-1, alpha, beta, piece, MIN);
             }
             fastBoard.undoMove(move);
             if (test > alpha) {
@@ -140,7 +140,7 @@ public class StudentPlayer extends PentagoPlayer {
             MyTools.loadFile();
         }
 //        runSimulations();
-//        testWeights(FastBoard.WHITE, new int[]{0,1,2,10,100,0});
+//        testWeights(FastBoard.BLACK, new int[]{0,1,2,10,100,0});
 //        testWeights(FastBoard.BLACK, new int[]{0,0,3,50,250,0});
     }
 

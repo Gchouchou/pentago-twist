@@ -420,19 +420,19 @@ public class MyTools {
             if (gameOver) {
                 return score;
             }
-            if (this.turnNumber == 2 && turnPlayer == 0) {
-                int sign = 1;
-                long tag = this.getTag();
-                if (!tagMap.containsKey(tag)) {
-                    this.rotate180();
-                    tag = getTag();
-                    this.rotate180();
-                }
-                if (piece == BLACK) {
-                    sign = -1;
-                }
-                return sign*tagMap.get(tag);
-            }
+//            if (this.turnNumber == 2 && turnPlayer == 0) {
+//                int sign = 1;
+//                long tag = this.getTag();
+//                if (!tagMap.containsKey(tag)) {
+//                    this.rotate180();
+//                    tag = getTag();
+//                    this.rotate180();
+//                }
+//                if (piece == BLACK) {
+//                    sign = -1;
+//                }
+//                return sign*tagMap.get(tag);
+//            }
             int sum = 0;
 //            for (int i = 0; i < 3; i++) {
 //                for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
