@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class MyTools {
@@ -18,7 +19,9 @@ public class MyTools {
     private static int[][] evalWeights;
     private static final String LINEARCSV = "LINEAR.csv";
     private static final String COMPLEXTXT = "COMPLEX.txt";
+    private static final String EVALS = "EVAL4.txt";
     private static final Integer COMPLEXLENGTH = 96;
+    private static final HashMap<Long,Integer> tagMap = new HashMap<>(176868);
 
     private static boolean loaded = false;
 
@@ -54,33 +57,59 @@ public class MyTools {
         loaded = true;
         LoadStrings(SIMPLETXT, template);
         LoadStrings(COMPLEXTXT, template2);
-        evalWeights = new int[2][];
-        evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,100,0};
-        evalWeights[FastBoard.BLACK] = new int[]{0,0,1,15,150,0};
-
-        linearWeights = new int[3][];
+        FastBoard board = new FastBoard();
         try {
-            FileReader fr = new FileReader("data/" + LINEARCSV);
+            FileReader fr = new FileReader("data/" + EVALS);
             BufferedReader br = new BufferedReader(fr);
             String str;
-            for (int i = 0; i < 3; i++) {
-                str = br.readLine();
-                linearWeights[i] = strToArray(str);
+            String[] splited;
+            int[] ints = new int[5];
+            int i;
+            while ((str = br.readLine()) != null) {
+                splited = str.split(",");
+                for (i = 0; i < 5; i++) {
+                    ints[i] = Integer.parseInt(splited[i]);
+                }
+                for (i = 0; i < 4; i++) {
+                    board.board[ints[i] / 6][ints[i] % 6] = i / 2;
+                }
+                tagMap.put(board.getTag(),ints[4]);
+                for (i = 0; i < 4; i++) {
+                    board.board[ints[i] / 6][ints[i] % 6] = FastBoard.EMPTY;
+                }
             }
             br.close();
             fr.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        evalWeights = new int[2][];
+        evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,100,0};
+        evalWeights[FastBoard.BLACK] = new int[]{0,1,2,10,100,0};
+
+//        linearWeights = new int[3][];
+//        try {
+//            FileReader fr = new FileReader("data/" + LINEARCSV);
+//            BufferedReader br = new BufferedReader(fr);
+//            String str;
+//            for (int i = 0; i < 3; i++) {
+//                str = br.readLine();
+//                linearWeights[i] = strToArray(str);
+//            }
+//            br.close();
+//            fr.close();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
-    private static void LoadStrings(String complextxt, ArrayList<int[][]> template2) {
+    private static void LoadStrings(String FileName, ArrayList<int[][]> targetArray) {
         try {
-            FileReader fr = new FileReader("data/" + complextxt);
+            FileReader fr = new FileReader("data/" + FileName);
             BufferedReader br = new BufferedReader(fr);
             String str;
             while ((str = br.readLine()) != null) {
-                template2.add(stringToComb(str));
+                targetArray.add(stringToComb(str));
             }
             br.close();
             fr.close();
@@ -390,6 +419,19 @@ public class MyTools {
 //            return score;
             if (gameOver) {
                 return score;
+            }
+            if (this.turnNumber == 2 && turnPlayer == 0) {
+                int sign = 1;
+                long tag = this.getTag();
+                if (!tagMap.containsKey(tag)) {
+                    this.rotate180();
+                    tag = getTag();
+                    this.rotate180();
+                }
+                if (piece == BLACK) {
+                    sign = -1;
+                }
+                return sign*tagMap.get(tag);
             }
             int sum = 0;
 //            for (int i = 0; i < 3; i++) {
