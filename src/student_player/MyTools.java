@@ -15,39 +15,25 @@ public class MyTools {
     //   region <Eval File Loading>
     private static final String SIMPLETXT = "SIMPLE.txt";
     private static final Integer FILELENGTH = 32;
-    private static int[][] evalWeights;
-    private static final String LINEARCSV = "LINEAR.csv";
     private static final String COMPLEXTXT = "COMPLEX.txt";
     private static final Integer COMPLEXLENGTH = 96;
 
+    private static int[][] evalWeights;
     private static boolean loaded = false;
 
     public static ArrayList<int[][]> template;
     public static ArrayList<int[][]> template2;
-    public static int[][] linearWeights;
-
-    //  method to read string and create the set of 5 coordinates.
-    private static int[][] stringToComb(String s) {
-        int[][] a = new int[5][2];
-        char[] parser = s.toCharArray();
-        a[0][0] = parser[0] - '0';
-        a[0][1] = parser[1] - '0';
-        a[1][0] = parser[2] - '0';
-        a[1][1] = parser[3] - '0';
-        a[2][0] = parser[4] - '0';
-        a[2][1] = parser[5] - '0';
-        a[3][0] = parser[6] - '0';
-        a[3][1] = parser[7] - '0';
-        a[4][0] = parser[8] - '0';
-        a[4][1] = parser[9] - '0';
-        return a;
-    }
 
 
     public static boolean checkLoaded() {
         return loaded;
     }
 
+    /**
+     * Loads evaluation weights
+     * loads the set of five in a row coordinates
+     * also loads the set of indirect five in a row coordinates
+     */
     public static void loadFile() {
         template = new ArrayList<>(FILELENGTH);
         template2 = new ArrayList<>(COMPLEXLENGTH);
@@ -56,31 +42,21 @@ public class MyTools {
         LoadStrings(COMPLEXTXT, template2);
         evalWeights = new int[2][];
         evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,100,0};
-        evalWeights[FastBoard.BLACK] = new int[]{0, 1, 0, 10, 30, 0};
+        evalWeights[FastBoard.BLACK] = evalWeights[FastBoard.WHITE];
 
-        linearWeights = new int[3][];
-        try {
-            FileReader fr = new FileReader("data/" + LINEARCSV);
-            BufferedReader br = new BufferedReader(fr);
-            String str;
-            for (int i = 0; i < 3; i++) {
-                str = br.readLine();
-                linearWeights[i] = strToArray(str);
-            }
-            br.close();
-            fr.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
-    private static void LoadStrings(String complextxt, ArrayList<int[][]> template2) {
+    /**
+     * Takes file name an target array list and reads every string of set of five coordinates
+     * and puts it into the array list
+     */
+    private static void LoadStrings(String fileName, ArrayList<int[][]> targetList) {
         try {
-            FileReader fr = new FileReader("data/" + complextxt);
+            FileReader fr = new FileReader("data/" + fileName);
             BufferedReader br = new BufferedReader(fr);
             String str;
             while ((str = br.readLine()) != null) {
-                template2.add(stringToComb(str));
+                targetList.add(stringToComb(str));
             }
             br.close();
             fr.close();
@@ -89,20 +65,18 @@ public class MyTools {
         }
     }
 
-    //    take csv and convert to array
-    private static int[] strToArray(String string) {
-        String[] arr = string.split(",");
-        assert (arr.length == 6);
-        int[] array = new int[arr.length];
-        for (int i = 0; i < arr.length; i++) {
-            array[i] = Integer.parseInt(arr[i]);
+    /**
+     *  read a string of length 10
+     *  in the form (x1y1x2y2...)
+     *  and create an array of 5 coordinates.
+     */
+    private static int[][] stringToComb(String s) {
+        int[][] a = new int[5][2];
+        char[] parser = s.toCharArray();
+        for (int i = 0; i < 10; i++) {
+            a[i / 2][i % 2] = parser[i] - '0';
         }
-        return array;
-    }
-
-    //    change evaluation function weights for a particular color
-    public static void loadWeights(int piece, int[] arr) {
-        evalWeights[piece] = arr;
+        return a;
     }
 // endregion
 
@@ -112,20 +86,20 @@ public class MyTools {
     }
 
     //	region <Legal move Filtering>
-//	get legal moves up to symmetry
-    public static ArrayList<PentagoMove> getLegalMoves(FastBoard boardState, int piece, boolean isMax) {
-//        if (boardState.getTurnNumber() < 2) {
-//        }
-//        return boardState.getAllLegalMoves();
+
+    /**
+     * Get all legal moves from ths board position
+     * evaluated by white or black (piece) (the one starting the alpha beta pruning)
+     */
+    public static ArrayList<PentagoMove> getLegalMoves(FastBoard boardState, int piece) {
+//        Get all moves/score pair up to symmetry
         ArrayList<MoveScorePair> list = getLegalMovesSymmetry(boardState, piece);
-//        test every transform and see which one improves our score
-//        we then sort moves by their depth 1 evaluations for better performance hopefully
+//        we then sort moves by their depth 1 evaluations for better performance
         Collections.sort(list);
-        if (isMax) {
+        if (boardState.getTurnPlayer() == piece) {
             Collections.reverse(list);
         }
 
-//        Collections.shuffle(list);
 //        Take only the moves out
         ArrayList<PentagoMove> list1 = new ArrayList<>(list.size());
         for (MoveScorePair pair :
@@ -135,7 +109,9 @@ public class MyTools {
         return list1;
     }
 
-
+    /**
+     * Class that contains a move and its attached score
+     */
     private static class MoveScorePair implements Comparable<MoveScorePair> {
         public PentagoMove move;
         public Integer score;
@@ -145,28 +121,31 @@ public class MyTools {
             this.score = score;
         }
 
+        /**
+         * We compare moves by their scores
+         */
         @Override
         public int compareTo(MoveScorePair o) {
             return this.score.compareTo(o.score);
         }
     }
 
-    //    get all moves up to symmetry
+    /**
+     * Get all moves up to symmetry
+     */
     public static ArrayList<MoveScorePair> getLegalMovesSymmetry(FastBoard boardState, int piece) {
+//        get all possible moves
         ArrayList<PentagoMove> moves = boardState.getAllLegalMoves();
         ArrayList<MoveScorePair> nonDupeMoves = new ArrayList<>(moves.size());
         HashSet<Long> positions = new HashSet<>(moves.size());
         for (PentagoMove m : moves) {
-//            PentagoBoardState successor = (PentagoBoardState) boardState.clone();
-//            successor.processMove(m);
-//            int[][] mat = boardConvert(successor);
             boardState.doMove(m);
             if (positions.add(boardState.getTag())) {
-//				new position
+//				move leads to a unique position
                 nonDupeMoves.add(new MoveScorePair(m, boardState.evaluate(piece)));
-//                no point is searching for symmetries in position that are usually not symmetric
+//                only search for symmetries in the first few moves
                 if (boardState.getTurnNumber() < 3) {
-                    //				rotate 180
+                    //rotate 180
                     boardState.rotate180();
                     positions.add(boardState.getTag());
                     boardState.rotate180();
@@ -177,43 +156,9 @@ public class MyTools {
         return nonDupeMoves;
     }
 
-    //	rotating a board
-    public static void rotate180(int[][] mat) {
-//        take all squares above half way
-        for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
-            for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
-                int temp = mat[x][y];
-                mat[x][y] = mat[PentagoBoardState.BOARD_SIZE - x - 1][PentagoBoardState.BOARD_SIZE - y - 1];
-                mat[PentagoBoardState.BOARD_SIZE - x - 1][PentagoBoardState.BOARD_SIZE - y - 1] = temp;
-            }
-        }
-    }
-
-    //	Getting Unique Tag of Matrix
-    public static long boardTag(int[][] mat) {
-        long index = 0;
-        for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
-            for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
-                index += mat[x][y];
-//			    mod 3 so we have to go up by 3 and we can barely fit inside the space
-                index *= 3;
-            }
-        }
-        return index;
-    }
-
-    //	Converting Board to Matrix
-    private static int[][] boardConvert(PentagoBoardState boardState) {
-        int[][] mat = new int[PentagoBoardState.BOARD_SIZE][PentagoBoardState.BOARD_SIZE];
-        for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
-            for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
-                mat[x][y] = convertPiece(boardState.getPieceAt(x, y));
-            }
-        }
-        return mat;
-    }
-
-    //	converting pieces to integers
+    /**
+     * Convert PentagoBoardState.Piece into an integer
+     */
     public static int convertPiece(PentagoBoardState.Piece p) {
         switch (p) {
             case BLACK:
@@ -226,7 +171,10 @@ public class MyTools {
     }
 //	endregion
 
-    //	faster board implementation and allows reversing moves
+    /**
+     * Custom internal representation of a PentagoBoardState with less overhead
+     * and better performance
+     */
     public static class FastBoard {
         public int[][] board;
         boolean evaluated;
@@ -275,7 +223,7 @@ public class MyTools {
             return turnNumber;
         }
 
-        //    Get all legal moves no brain
+        //    Get all legal moves
         public ArrayList<PentagoMove> getAllLegalMoves() {
             ArrayList<PentagoMove> moves = new ArrayList<>();
             for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
@@ -293,6 +241,11 @@ public class MyTools {
             return moves;
         }
 
+        /**
+         * Evaluate board state and checks if anybody is winning the game
+         * sets score the the local variable score
+         * piece is used when white and black have different evaluation functions
+         */
         public int evaluate(int piece) {
             if (evaluated) {
                 return score;
@@ -306,19 +259,18 @@ public class MyTools {
 
             for (int[][] wins : MyTools.template) {
                 int count = 0;
-                int thing = EMPTY;
+                int color = EMPTY;
                 for (int i = 0; i < 5; i++) {
-//				get what piece is at the location
                     int p = board[wins[i][0]][wins[i][1]];
 //                skip when we see nothing
                     if (p == EMPTY) {
                         continue;
                     }
 //                update if it is the first piece we saw
-                    if (thing == EMPTY) {
-                        thing = p;
+                    if (color == EMPTY) {
+                        color = p;
                         count++;
-                    } else if (p != thing) {
+                    } else if (p != color) {
 //                    different colored piece we stop counting
                         count = 0;
                         break;
@@ -330,12 +282,12 @@ public class MyTools {
 //			scoring algo
 //            check what color were the pieces
                 int sign = 0;
-                if (thing == piece) {
+                if (color == piece) {
                     sign = 1;
                     if (count == 5) {
                         win = true;
                     }
-                } else if (thing != EMPTY) {
+                } else if (color == 1-piece) {
                     sign = -1;
                     if (count == 5) {
                         otherWin = true;
@@ -347,10 +299,11 @@ public class MyTools {
                     gameOver = true;
                     return this.score;
                 }
-                if (count == 4 && this.turnPlayer == thing) {
+                if (count == 4 && this.turnPlayer == color) {
 //                    it is also his turn to play compensate for that
                     premptwin = true;
                 }
+//                update score according to the count
                 score += sign * MyTools.evalParams(count, piece);
             }
 
@@ -373,6 +326,7 @@ public class MyTools {
                 gameOver = true;
                 return score;
             }
+//            if the game is over and drawn but is not obvious
             if (gameOver || turnNumber >= 18) {
                 score = 0;
                 gameOver = true;
@@ -392,29 +346,11 @@ public class MyTools {
                 return score;
             }
             int sum = 0;
-//            for (int i = 0; i < 3; i++) {
-//                for (int j = 0; j < PentagoBoardState.BOARD_SIZE; j++) {
-//                    int x = i;
-//                    int y = j;
-//                    if (board[x][y] == piece) {
-//                        sum += MyTools.linearWeights[i][j];
-//                    } else if (board[x][y] == 1 - piece) {
-//                        sum -= MyTools.linearWeights[i][j];
-//                    }
-//                    x = PentagoBoardState.BOARD_SIZE - x - 1;
-//                    y = PentagoBoardState.BOARD_SIZE - y - 1;
-//                    if (board[x][y] == piece) {
-//                        sum += MyTools.linearWeights[i][j];
-//                    } else if (board[x][y] == 1 - piece) {
-//                        sum -= MyTools.linearWeights[i][j];
-//                    }
-//                }
-//            }
             boolean premptwin = false;
 
             for (int[][] wins : MyTools.template2) {
                 int count = 0;
-                int thing = EMPTY;
+                int color = EMPTY;
                 for (int i = 0; i < 5; i++) {
 //				get what piece is at the location
                     int p = board[wins[i][0]][wins[i][1]];
@@ -423,10 +359,10 @@ public class MyTools {
                         continue;
                     }
 //                update if it is the first piece we saw
-                    if (thing == EMPTY) {
-                        thing = p;
+                    if (color == EMPTY) {
+                        color = p;
                         count++;
-                    } else if (p != thing) {
+                    } else if (p != color) {
 //                    different colored piece we stop counting
                         count = 0;
                         break;
@@ -438,29 +374,19 @@ public class MyTools {
 //			scoring algo
 //            check what color were the pieces
                 int sign = 0;
-                if (thing == piece) {
+                if (color == piece) {
                     sign = 1;
-                } else if (thing != EMPTY) {
+                } else if (color == 1 - piece) {
                     sign = -1;
                 }
-                if ((count == 4 || count == 5) && thing == turnPlayer) {
+                if ((count == 4 || count == 5) && color == turnPlayer) {
 //                    he can win in one move
                     premptwin = true;
                     break;
-                } else if (count == 5 && thing == 1 - turnPlayer) {
+                } else if (count == 5 && color == 1 - turnPlayer) {
 //                  we are actually not winning (since he could block so we downgrade to count = 4
                     count = 4;
                 }
-//				it's a draw just break
-//                if (win && otherWin) {
-//                    this.score = 0;
-//                    gameOver = true;
-//                    return this.score;
-//                }
-//                if (count == 4 && this.turnPlayer == thing) {
-////                    it is also his turn to play compensate for that
-//                    premptwin = true;
-//                }
                 sum += sign * MyTools.evalParams(count, piece);
             }
 
@@ -565,11 +491,25 @@ public class MyTools {
         }
 
         public long getTag() {
-            return MyTools.boardTag(board);
+            long index = 0;
+            for (int x = 0; x < PentagoBoardState.BOARD_SIZE; x++) {
+                for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+                    index += board[x][y];
+//			    mod 3 so we have to go up by 3 and we can barely fit inside the space
+                    index *= 3;
+                }
+            }
+            return index;
         }
 
         public void rotate180() {
-            MyTools.rotate180(board);
+            for (int x = 0; x < PentagoBoardState.BOARD_SIZE / 2; x++) {
+                for (int y = 0; y < PentagoBoardState.BOARD_SIZE; y++) {
+                    int temp = board[x][y];
+                    board[x][y] = board[PentagoBoardState.BOARD_SIZE - x - 1][PentagoBoardState.BOARD_SIZE - y - 1];
+                    board[PentagoBoardState.BOARD_SIZE - x - 1][PentagoBoardState.BOARD_SIZE - y - 1] = temp;
+                }
+            }
         }
 
         public int getTurnPlayer() {
