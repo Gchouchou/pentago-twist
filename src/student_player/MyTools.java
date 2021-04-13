@@ -41,7 +41,7 @@ public class MyTools {
         LoadStrings(SIMPLETXT, template);
         LoadStrings(COMPLEXTXT, template2);
         evalWeights = new int[2][];
-        evalWeights[FastBoard.WHITE] = new int[]{0,1,2,10,100,0};
+        evalWeights[FastBoard.WHITE] = new int[]{0, 1, 2, 10, 100, 0};
         evalWeights[FastBoard.BLACK] = evalWeights[FastBoard.WHITE];
 
     }
@@ -66,9 +66,9 @@ public class MyTools {
     }
 
     /**
-     *  read a string of length 10
-     *  in the form (x1y1x2y2...)
-     *  and create an array of 5 coordinates.
+     * read a string of length 10
+     * in the form (x1y1x2y2...)
+     * and create an array of 5 coordinates.
      */
     private static int[][] stringToComb(String s) {
         int[][] a = new int[5][2];
@@ -287,7 +287,7 @@ public class MyTools {
                     if (count == 5) {
                         win = true;
                     }
-                } else if (color == 1-piece) {
+                } else if (color == 1 - piece) {
                     sign = -1;
                     if (count == 5) {
                         otherWin = true;
@@ -403,7 +403,7 @@ public class MyTools {
             return score;
         }
 
-        //    region Board Manipulation
+        //    #region Board Manipulation
         public void doMove(PentagoMove move) {
             evaluated = false;
             assert (!gameOver);

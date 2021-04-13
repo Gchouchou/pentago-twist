@@ -2,16 +2,11 @@ package student_player;
 
 import boardgame.Move;
 import pentago_twist.PentagoBoardState;
-import pentago_twist.PentagoCoord;
 import pentago_twist.PentagoMove;
 import pentago_twist.PentagoPlayer;
 import student_player.MyTools.FastBoard;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
 
 /**
  * A player file submitted by a student.
@@ -47,9 +42,9 @@ public class StudentPlayer extends PentagoPlayer {
         PentagoMove move = alphaBetaWrapper(fastBoard);
         long stopTime = System.nanoTime();
 //        System.out.println("" + ( stopTime -startTime ) / 10000000);
-        if (stopTime- startTime <20000000) {
+        if (stopTime - startTime < 20000000) {
 //            go deeper when we finish it in less 0.02 seconds
-            return alphaBetaWrapper(fastBoard,MAXDEPTHWHITE+1,MAXDEPTHBLACK+1);
+            return alphaBetaWrapper(fastBoard, MAXDEPTHWHITE + 1, MAXDEPTHBLACK + 1);
         }
         return move;
     }
@@ -71,9 +66,9 @@ public class StudentPlayer extends PentagoPlayer {
         for (PentagoMove move : legalMoves) {
             fastBoard.doMove(move);
             if (piece == FastBoard.WHITE) {
-                test = alphaBeta(fastBoard, maxDepthWhite-1, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, maxDepthWhite - 1, alpha, beta, piece, MIN);
             } else {
-                test = alphaBeta(fastBoard, maxDepthBlack-1, alpha, beta, piece, MIN);
+                test = alphaBeta(fastBoard, maxDepthBlack - 1, alpha, beta, piece, MIN);
             }
             fastBoard.undoMove(move);
             if (test > alpha) {
