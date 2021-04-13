@@ -4,7 +4,6 @@ import boardgame.Move;
 import pentago_twist.PentagoBoardState;
 import pentago_twist.PentagoMove;
 import pentago_twist.PentagoPlayer;
-import student_player.MyTools.FastBoard;
 
 import java.util.ArrayList;
 
@@ -37,7 +36,7 @@ public class StudentPlayer extends PentagoPlayer {
             MyTools.loadFile();
         }
 
-        FastBoard fastBoard = new FastBoard(boardState);
+        MyTools.FastBoard fastBoard = new MyTools.FastBoard(boardState);
         long startTime = System.nanoTime();
         PentagoMove move = alphaBetaWrapper(fastBoard);
         long stopTime = System.nanoTime();
@@ -49,14 +48,14 @@ public class StudentPlayer extends PentagoPlayer {
         return move;
     }
 
-    public PentagoMove alphaBetaWrapper(FastBoard fastBoard) {
+    public PentagoMove alphaBetaWrapper(MyTools.FastBoard fastBoard) {
         return alphaBetaWrapper(fastBoard, MAXDEPTHWHITE, MAXDEPTHBLACK);
     }
 
     /**
      * Modified minimax to return the chosen move (only the first layer)
      */
-    public PentagoMove alphaBetaWrapper(FastBoard fastBoard, int maxDepthWhite, int maxDepthBlack) {
+    public PentagoMove alphaBetaWrapper(MyTools.FastBoard fastBoard, int maxDepthWhite, int maxDepthBlack) {
         int piece = fastBoard.getTurnPlayer();
         ArrayList<PentagoMove> legalMoves = MyTools.getLegalMoves(fastBoard, piece);
         PentagoMove bestMove = legalMoves.get(0);
@@ -65,7 +64,7 @@ public class StudentPlayer extends PentagoPlayer {
         int beta = Integer.MAX_VALUE;
         for (PentagoMove move : legalMoves) {
             fastBoard.doMove(move);
-            if (piece == FastBoard.WHITE) {
+            if (piece == MyTools.FastBoard.WHITE) {
                 test = alphaBeta(fastBoard, maxDepthWhite - 1, alpha, beta, piece, MIN);
             } else {
                 test = alphaBeta(fastBoard, maxDepthBlack - 1, alpha, beta, piece, MIN);
@@ -88,7 +87,7 @@ public class StudentPlayer extends PentagoPlayer {
     /**
      * Standard fixed depth Alpha beta pruning minimax algorithm returning the score
      */
-    int alphaBeta(FastBoard position, int depth, int alpha, int beta,
+    int alphaBeta(MyTools.FastBoard position, int depth, int alpha, int beta,
                   int piece, boolean isMAX) {
         position.evaluate(piece);
         if (position.getGameOver() || depth == 0) {
