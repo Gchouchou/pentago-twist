@@ -1,4 +1,8 @@
-# pentago_twist
+# pentago_twist AI
+
+This is a project for comp 424 in Winter 2021. The goal was to design an AI to play pentago Swap.
+
+## The Game
 
 ![](https://github.com/SaminYeasar/pentago_twist/blob/main/image/game.gif)
 
@@ -6,20 +10,24 @@
 Pentago-Twist falls into the Moku family of games. Other popular games in this category include Tic-Tac-Toe and Connect-4, although Pentago-Twist has significantly more complexity. The biggest difference in
 Pentago-Twist is that the board is divided into quadrants, which can be flipped or rotate 90 degree right during the game.
 
-## Setup 
+### Setup 
 Pentago-twist is a two-player game played on a 6x6 board, which consists of four 3x3 quadrants. To begin, the board is empty. The first player plays as white and the other plays as black.
 
 
-## Objective 
+### Objective 
 In order to win, each player tries to achieve 5 pieces in a row before their opponent does. A winning row can be achieved horizontally, vertically or diagonally. If all spaces on the board are occupied without a winner then a draw is declared. If rotating/flipping single quadrant results in a five-in-a-row for both players, the game also ends in a draw.
 
 
-## Playing
+### Playing
 Moves consist of two phases: placing and rotating/flipping. On a given player's turn, a piece is first placed in an empty slot on the board. The player then selects a quadrant, and can choose either to flip or rotate 90 degree right. A
 complete move therefore consists of placing a piece, then rotating/flipping.
 
-## Strategy
-Allowing quadrants to be flipped/rotated introduces significant complexity and your AI agent will need to contend with this high branching complexity. Since quadrants can be flipped/rotated, blocking an opponent's row is not as easy as simply placing an adjacent piece. A good AI agent might consider balancing seeking to win with preventing their opponent from achieving the same.
+## The AI
+
+My agent uses a minimax tree of depth 3 with alpha-beta pruning. I developed an internal representation and removed duplicate board states to ensure it finished searching in 2 seconds.
+The evaluation function goes through every 5 consecutive squares and gives scores depending on the number of uncontested stones.
+It also goes through every possible 5 consecutive squares after twisting the board once.
+The parameters were obtained by generating a set of parameters and choosing one that lost the least.
 
 ---
 
