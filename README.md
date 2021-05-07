@@ -1,6 +1,6 @@
 # pentago_twist AI
 
-This is a project for comp 424 in Winter 2021. The goal was to design an AI to play pentago Swap.
+This is a project for comp 424 in Winter 2021. The goal was to design an AI to play pentago Twist.
 
 ## The Game
 
